@@ -23,10 +23,7 @@ public class NFSimpleScrollRect : ScrollRect
     private IEnumerator mCoroutine = null;
 
 
-    private Bounds m_ViewBounds;
-
-
-    private Vector2 m_Velocity;
+    private Bounds mViewBounds;
 
 
     protected override void OnDisable()
@@ -219,7 +216,7 @@ public class NFSimpleScrollRect : ScrollRect
                 _tempPos.x += _offset;
             }
 
-            content.anchoredPosition = _tempPos;
+            base.SetContentAnchoredPosition(_tempPos);
 
             yield return null;
         }
