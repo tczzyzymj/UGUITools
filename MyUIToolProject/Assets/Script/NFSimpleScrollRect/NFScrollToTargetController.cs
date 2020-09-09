@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class TestNFScrollToTargetController : MonoBehaviour
+public class NFScrollToTargetController : MonoBehaviour
 {
     public Button RefreshButton;
 
