@@ -7,9 +7,16 @@ using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.UI;
 
 
+
 /// <summary>
 /// size of item is fixed! create fixed count when awake
 /// 内部 item 的长度是确定的
+///
+/// there should not be any layout group component or content size filter component on content game object node
+/// content节点上面不要有任何 layoutgroup 组件
+///
+/// if there is , it will be disabled
+/// 如果有，那么会被禁用掉
 /// </summary>
 public class NFSimpleLoopVerticle : ScrollRect
 {
@@ -346,11 +353,78 @@ public class NFSimpleLoopVerticle : ScrollRect
     }
 
 
-    public override void OnDrag(PointerEventData eventData)
+    protected override void LateUpdate()
     {
-        base.OnDrag(eventData);
+        base.LateUpdate();
 
-        // make test for first and last
+        // if not move, then don't check
+        if (velocity.Equals(Vector2.zero))
+        {
+            return;
+        }
+
+        // here we need to compare with viewport, and coordinate system should use viewport
+
+        if (velocity.y > 0)
+        {
+            // down to top, check first one
+            // test first acitve game object and last one
+            var _first = content.GetChild(0);
+
+            var _rectTrans = _first.transform as RectTransform;
+
+            Vector3[] _childPointArray = new Vector3[4];
+
+            _rectTrans.GetWorldCorners(_childPointArray);
+
+            for (int i = 0; i < 4; ++i)
+            {
+                _childPointArray[i] = viewport.InverseTransformPoint(_childPointArray[i]);
+            }
+
+            Vector3[] _viewPortPointArray = new Vector3[4];
+
+            viewport.GetLocalCorners(_viewPortPointArray);
+
+            if (_childPointArray[0].y > viewport.rect.max.y)
+            {
+                if (mEndDataIndex + 1 >= -mTotalCount)
+                {
+                    return;
+                }
+
+                _rectTrans.SetAsLastSibling();
+
+                mStartDataIndex++;
+
+                mEndDataIndex++;
+
+                mRefreshCallback(_first.gameObject, mChildIndexMap[_first.gameObject], mEndDataIndex);
+            }
+        }
+        else
+        {
+            // top to down, check last one
+            var _last = content.GetChild(0);
+
+            var _rectTrans = _last.transform as RectTransform;
+
+            if (_rectTrans.rect.min.y > content.rect.max.y)
+            {
+                _rectTrans.SetAsFirstSibling();
+
+                if (mStartDataIndex - 1 <= 0)
+                {
+                    return;
+                }
+
+                mStartDataIndex--;
+
+                mEndDataIndex--;
+
+                mRefreshCallback(_last.gameObject, mChildIndexMap[_last.gameObject], mStartDataIndex);
+            }
+        }
     }
 
 
@@ -365,6 +439,9 @@ public class NFSimpleLoopVerticle : ScrollRect
     }
 
 
+    private bool mIsFirstRefresh = true;
+
+
     public void RefreshCells()
     {
         if (!mHasInit)
@@ -372,6 +449,15 @@ public class NFSimpleLoopVerticle : ScrollRect
             Debug.LogError("Please init first!");
 
             return;
+        }
+
+        if (mIsFirstRefresh)
+        {
+            mIsFirstRefresh = false;
+
+            mStartDataIndex = 0;
+
+            mEndDataIndex = Mathf.Min(mTotalCount - 1, mMaxCount - 1);
         }
 
         var _targetCount = Mathf.Min(mMaxCount, mTotalCount);

@@ -249,16 +249,7 @@ public class NFSimpleScrollRect : ScrollRect
 
         Vector3[] _worldCorners = new Vector3[4];
 
-        var _rectTrans = (content.transform as RectTransform);
-
-        if (_rectTrans == null)
-        {
-            Debug.LogError("No RectTransform, Please check!");
-
-            return new Bounds();
-        }
-
-        _rectTrans.GetWorldCorners(_worldCorners);
+        content.GetWorldCorners(_worldCorners);
 
         for (int i = 0; i < 4; ++i)
         {
