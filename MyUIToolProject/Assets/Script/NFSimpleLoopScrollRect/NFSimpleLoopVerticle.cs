@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.UI;
-
 
 
 /// <summary>
@@ -34,9 +34,6 @@ public class NFSimpleLoopVerticle : ScrollRect
 
 
     private IEnumerator mCoroutine = null;
-
-
-    private Bounds mViewBounds;
 
 
     private int mStartDataIndex;
@@ -311,7 +308,25 @@ public class NFSimpleLoopVerticle : ScrollRect
             return false;
         }
 
+        var _contentSizeFitter = content.GetComponent<ContentSizeFitter>();
+
+        if (_contentSizeFitter != null)
+        {
+            _contentSizeFitter.enabled = false;
+        }
+
+        mLayoutGroup = content.GetComponent<HorizontalOrVerticalLayoutGroup>();
+
+        if (mLayoutGroup != null)
+        {
+            mLayoutGroup.enabled = false;
+        }
+
         var _itemHeight = _rectTrans.rect.height;
+
+        mItemSize = _itemHeight;
+
+        mHalfItemSize = mItemSize * 0.5f;
 
         mMaxCount = Mathf.CeilToInt(_viewPortHeight / _itemHeight) + 1;
 
@@ -338,11 +353,20 @@ public class NFSimpleLoopVerticle : ScrollRect
 
         for (int i = 0; i < content.childCount; ++i)
         {
-            var _childGO = content.GetChild(i).gameObject;
+            var _childTrans = content.GetChild(i);
+            var _childGO = _childTrans.gameObject;
 
             mChildIndexMap.Add(_childGO, i);
 
             _childGO.SetActive(!autoHideChildFirst);
+
+            var _childRectTransform = _childTrans as RectTransform;
+
+            _childRectTransform.anchorMax = new Vector2(0.5f, 1f);
+
+            _childRectTransform.anchorMin = new Vector2(0.5f, 1f);
+
+            _childRectTransform.pivot = new Vector2(0.5f, 1.0f);
         }
 
         mRefreshCallback = refreshCallback;
@@ -363,7 +387,18 @@ public class NFSimpleLoopVerticle : ScrollRect
             return;
         }
 
+        // if data count is less then child count, then skip
+        if (mTotalCount < mChildIndexMap.Count)
+        {
+            return;
+        }
+
         // here we need to compare with viewport, and coordinate system should use viewport
+
+        if (Mathf.Approximately(velocity.y, 0))
+        {
+            return;
+        }
 
         if (velocity.y > 0)
         {
@@ -377,18 +412,12 @@ public class NFSimpleLoopVerticle : ScrollRect
 
             _rectTrans.GetWorldCorners(_childPointArray);
 
-            for (int i = 0; i < 4; ++i)
+            // only need 0 , as min.y
+            var _minPos = viewport.InverseTransformPoint(_childPointArray[0]);
+
+            if (_minPos.y > viewport.rect.max.y)
             {
-                _childPointArray[i] = viewport.InverseTransformPoint(_childPointArray[i]);
-            }
-
-            Vector3[] _viewPortPointArray = new Vector3[4];
-
-            viewport.GetLocalCorners(_viewPortPointArray);
-
-            if (_childPointArray[0].y > viewport.rect.max.y)
-            {
-                if (mEndDataIndex + 1 >= -mTotalCount)
+                if (mEndDataIndex + 1 >= mTotalCount)
                 {
                     return;
                 }
@@ -400,29 +429,40 @@ public class NFSimpleLoopVerticle : ScrollRect
                 mEndDataIndex++;
 
                 mRefreshCallback(_first.gameObject, mChildIndexMap[_first.gameObject], mEndDataIndex);
+
+                UpdateChildPos();
             }
         }
         else
         {
             // top to down, check last one
-            var _last = content.GetChild(0);
+            var _last = content.GetChild(content.childCount - 1);
 
             var _rectTrans = _last.transform as RectTransform;
 
-            if (_rectTrans.rect.min.y > content.rect.max.y)
-            {
-                _rectTrans.SetAsFirstSibling();
+            Vector3[] _childPointArray = new Vector3[4];
 
-                if (mStartDataIndex - 1 <= 0)
+            _rectTrans.GetWorldCorners(_childPointArray);
+
+            // only need 0 , as min.y
+            var _maxPos = viewport.InverseTransformPoint(_childPointArray[1]);
+
+            if (_maxPos.y < viewport.rect.min.y)
+            {
+                if (mStartDataIndex - 1 < 0)
                 {
                     return;
                 }
+
+                _rectTrans.SetAsFirstSibling();
 
                 mStartDataIndex--;
 
                 mEndDataIndex--;
 
                 mRefreshCallback(_last.gameObject, mChildIndexMap[_last.gameObject], mStartDataIndex);
+
+                UpdateChildPos();
             }
         }
     }
@@ -435,11 +475,32 @@ public class NFSimpleLoopVerticle : ScrollRect
     {
         mTotalCount = totalCount;
 
+        UpdateContentSize();
+
         RefreshCells();
     }
 
 
     private bool mIsFirstRefresh = true;
+
+
+    private void UpdateContentSize()
+    {
+        var _sizeDelta = content.sizeDelta;
+
+        float _spacing = 0;
+
+        if (mLayoutGroup != null)
+        {
+            _spacing = mLayoutGroup.spacing;
+        }
+
+        var _height = mTotalCount * mItemSize + (mTotalCount - 1) * _spacing;
+
+        _sizeDelta.y = _height;
+
+        content.sizeDelta = _sizeDelta;
+    }
 
 
     public void RefreshCells()
@@ -476,6 +537,46 @@ public class NFSimpleLoopVerticle : ScrollRect
         for (int i = _targetCount; i < mMaxCount; ++i)
         {
             content.GetChild(i).gameObject.SetActive(false);
+        }
+
+        UpdateChildPos();
+    }
+
+
+    private float mItemSize = 156;
+
+
+    private float mHalfItemSize = 156;
+
+
+    private HorizontalOrVerticalLayoutGroup mLayoutGroup;
+
+
+    /// <summary>
+    /// update child position
+    /// </summary>
+    private void UpdateChildPos()
+    {
+        var _targetCount = Mathf.Min(mTotalCount, content.childCount);
+
+        float _spacing = 0;
+
+        if (mLayoutGroup != null)
+        {
+            _spacing = mLayoutGroup.spacing;
+        }
+
+        for (int i = 0; i < _targetCount; ++i)
+        {
+            var _child = content.GetChild(i) as RectTransform;
+
+            var _posY = -(mStartDataIndex + i) * (mItemSize + _spacing);
+
+            _child.anchoredPosition = new Vector3(
+                0,
+                _posY,
+                0
+            );
         }
     }
 

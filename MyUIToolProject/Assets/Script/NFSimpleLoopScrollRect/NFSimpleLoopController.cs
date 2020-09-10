@@ -20,6 +20,8 @@ public class NFSimpleLoopController : MonoBehaviour
     private void Awake()
     {
         CountInputButton.onClick.AddListener(OnClickCountInputButton);
+
+        Init();
     }
 
 
