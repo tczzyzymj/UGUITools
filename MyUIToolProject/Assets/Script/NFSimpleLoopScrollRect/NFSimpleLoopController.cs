@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class NFSimpleLoopController : MonoBehaviour
 {
-    public NFSimpleLoopVerticle SimpleLoopVerticle;
+    public NFFixsizeLoopScrollRect FixsizeLoopScrollRect;
 
 
     public InputField CountInputField;
@@ -39,20 +39,20 @@ public class NFSimpleLoopController : MonoBehaviour
             return;
         }
 
-        SimpleLoopVerticle.SetTotalCount(_targetCount);
+        FixsizeLoopScrollRect.SetTotalCount(_targetCount);
     }
 
 
     [ContextMenu("执行初始化")]
     public void Init()
     {
-        SimpleLoopVerticle.InitData(InternalRefreshItem, OnInitDataFinish, true);
+        FixsizeLoopScrollRect.InitData(InternalRefreshItem, OnInitDataFinish, true);
     }
 
 
     private void OnInitDataFinish()
     {
-        var _contentTrans = SimpleLoopVerticle.content.transform;
+        var _contentTrans = FixsizeLoopScrollRect.content.transform;
 
         for (int i = 0; i < _contentTrans.childCount; ++i)
         {

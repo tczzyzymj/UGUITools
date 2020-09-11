@@ -18,7 +18,7 @@ using UnityEngine.UI;
 /// if there is , it will be disabled
 /// 如果有，那么会被禁用掉
 /// </summary>
-public class NFSimpleLoopVerticle : ScrollRect
+public class NFFixsizeLoopScrollRect : ScrollRect
 {
     public bool IsScrolling
     {
@@ -75,7 +75,7 @@ public class NFSimpleLoopVerticle : ScrollRect
     /// <param name="speed"></param>
     public void ScrollToCell(int index, float speed)
     {
-        if (index < 0 || index >= content.childCount)
+        if (index < 0 || index >= mTotalCount)
         {
             UnityEngine.Debug.LogError("越界了！");
 
@@ -362,6 +362,13 @@ public class NFSimpleLoopVerticle : ScrollRect
 
             var _childRectTransform = _childTrans as RectTransform;
 
+            if (_childRectTransform == null)
+            {
+                Debug.LogError("There's no RectTransform in child! Please check!");
+
+                return false;
+            }
+
             _childRectTransform.anchorMax = new Vector2(0.5f, 1f);
 
             _childRectTransform.anchorMin = new Vector2(0.5f, 1f);
@@ -381,6 +388,15 @@ public class NFSimpleLoopVerticle : ScrollRect
     {
         base.LateUpdate();
 
+        LateUpadateForRefreshChild();
+    }
+
+
+    /// <summary>
+    /// check if child need set pos and refresh
+    /// </summary>
+    private void LateUpadateForRefreshChild()
+    {
         // if not move, then don't check
         if (velocity.Equals(Vector2.zero))
         {
@@ -407,6 +423,13 @@ public class NFSimpleLoopVerticle : ScrollRect
             var _first = content.GetChild(0);
 
             var _rectTrans = _first.transform as RectTransform;
+
+            if (_rectTrans == null)
+            {
+                Debug.LogError("There's no RectTransform in child! Please check!");
+
+                return;
+            }
 
             Vector3[] _childPointArray = new Vector3[4];
 
@@ -439,6 +462,13 @@ public class NFSimpleLoopVerticle : ScrollRect
             var _last = content.GetChild(content.childCount - 1);
 
             var _rectTrans = _last.transform as RectTransform;
+
+            if (_rectTrans == null)
+            {
+                Debug.LogError("There's no RectTransform in child! Please check!");
+
+                return;
+            }
 
             Vector3[] _childPointArray = new Vector3[4];
 
@@ -488,14 +518,7 @@ public class NFSimpleLoopVerticle : ScrollRect
     {
         var _sizeDelta = content.sizeDelta;
 
-        float _spacing = 0;
-
-        if (mLayoutGroup != null)
-        {
-            _spacing = mLayoutGroup.spacing;
-        }
-
-        var _height = mTotalCount * mItemSize + (mTotalCount - 1) * _spacing;
+        var _height = mTotalCount * mItemSize + (mTotalCount - 1) * Spacing + Padding.top + Padding.bottom;
 
         _sizeDelta.y = _height;
 
@@ -549,7 +572,76 @@ public class NFSimpleLoopVerticle : ScrollRect
     private float mHalfItemSize = 156;
 
 
+    public int ConstraintCount
+    {
+        get
+        {
+            if (mGridLayout != null)
+            {
+                // be careful, flexible is not allowed!
+                if (mGridLayout.constraint == GridLayoutGroup.Constraint.Flexible)
+                {
+                    return 1;
+                }
+
+                return mGridLayout.constraintCount;
+            }
+
+            return 1;
+        }
+    }
+
+
+    private RectOffset mEmptyPadding = null;
+
+
+    public RectOffset Padding
+    {
+        get
+        {
+            if (mLayoutGroup != null)
+            {
+                return mLayoutGroup.padding;
+            }
+
+            if (mGridLayout != null)
+            {
+                return mGridLayout.padding;
+            }
+
+            if (mEmptyPadding == null)
+            {
+                mEmptyPadding = new RectOffset(0, 0, 0, 0);
+            }
+
+            return mEmptyPadding;
+        }
+    }
+
+
+    public virtual float Spacing
+    {
+        get
+        {
+            if (mLayoutGroup != null)
+            {
+                return mLayoutGroup.spacing;
+            }
+
+            if (mGridLayout != null)
+            {
+                return mGridLayout.spacing.y;
+            }
+
+            return 0;
+        }
+    }
+
+
     private HorizontalOrVerticalLayoutGroup mLayoutGroup;
+
+
+    private GridLayoutGroup mGridLayout = null;
 
 
     /// <summary>
@@ -570,7 +662,14 @@ public class NFSimpleLoopVerticle : ScrollRect
         {
             var _child = content.GetChild(i) as RectTransform;
 
-            var _posY = -(mStartDataIndex + i) * (mItemSize + _spacing);
+            if (_child == null)
+            {
+                Debug.LogError("There's no RectTransform in child! Please check!");
+
+                continue;
+            }
+
+            var _posY = -(mStartDataIndex + i) * (mItemSize + _spacing) - Padding.top;
 
             _child.anchoredPosition = new Vector3(
                 0,
