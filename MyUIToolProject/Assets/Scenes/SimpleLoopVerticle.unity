@@ -304,10 +304,10 @@ RectTransform:
   m_Father: {fileID: 485617346}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -0.000030517578}
+  m_SizeDelta: {x: 816, y: 200}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &162005223
 MonoBehaviour:
@@ -339,7 +339,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 162005221}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 1741964061, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
@@ -962,8 +962,8 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 600, y: 154.6}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_SizeDelta: {x: 600, y: 160}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &816225667
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1721,7 +1721,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a3cb5c8298cbf342816e868e55ff5af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SimpleLoopVerticle: {fileID: 1254693546}
+  FixsizeLoopScrollRect: {fileID: 1254693546}
   CountInputField: {fileID: 1912857868}
   CountInputButton: {fileID: 1711935561}
 --- !u!114 &1169391569

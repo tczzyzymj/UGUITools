@@ -50,6 +50,13 @@ public class NFSimpleLoopController : MonoBehaviour
     }
 
 
+    [ContextMenu("刷新数据")]
+    public void RefreshData()
+    {
+        FixsizeLoopScrollRect.RefreshCells();
+    }
+
+
     private void OnInitDataFinish()
     {
         var _contentTrans = FixsizeLoopScrollRect.content.transform;
