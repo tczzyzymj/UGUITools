@@ -526,17 +526,17 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
                     _childTrans.SetAsLastSibling();
 
-                    if (EndDataIndex + 1 >= mTotalCount)
+                    EndDataIndex++;
+
+                    StartDataIndex++;
+
+                    if (EndDataIndex >= mTotalCount)
                     {
                         _childTrans.gameObject.SetActive(false);
                     }
                     else
                     {
                         _childTrans.gameObject.SetActive(true);
-
-                        StartDataIndex++;
-
-                        EndDataIndex++;
 
                         mRefreshDataCallback(
                             _childTrans.gameObject,
@@ -588,17 +588,17 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
                     _childTrans.SetAsFirstSibling();
 
-                    if (StartDataIndex - 1 < 0)
+                    StartDataIndex--;
+
+                    EndDataIndex--;
+
+                    if (StartDataIndex < 0)
                     {
                         _childTrans.gameObject.SetActive(false);
                     }
                     else
                     {
                         _childTrans.gameObject.SetActive(true);
-
-                        StartDataIndex--;
-
-                        EndDataIndex--;
 
                         mRefreshDataCallback(
                             _childTrans.gameObject,
