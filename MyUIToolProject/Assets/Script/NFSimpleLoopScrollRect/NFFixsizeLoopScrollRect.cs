@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEditor;
+using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Experimental.PlayerLoop;
@@ -185,10 +186,6 @@ public class NFFixsizeLoopScrollRect : ScrollRect
     protected override void Awake()
     {
         base.Awake();
-
-        horizontal = false;
-
-        vertical = true;
     }
 
 
@@ -656,17 +653,29 @@ public class NFFixsizeLoopScrollRect : ScrollRect
             _totalCount = Mathf.CeilToInt((float) mTotalCount / ConstraintCount);
         }
 
+        var _viewPortSize = viewport.rect.size;
+
         if (vertical)
         {
             var _height = _totalCount * mItemSize.y + (_totalCount - 1) * Spacing.y + Padding.top + Padding.bottom;
 
             _sizeDelta.y = _height;
+
+            if (_sizeDelta.x < 0 || Mathf.Approximately(_sizeDelta.x, 0))
+            {
+                _sizeDelta.x = _viewPortSize.x;
+            }
         }
         else if (horizontal)
         {
             var _width = _totalCount * mItemSize.x + (_totalCount - 1) * Spacing.x + Padding.left + Padding.right;
 
             _sizeDelta.x = _width;
+
+            if (_sizeDelta.y < 0 || Mathf.Approximately(_sizeDelta.y, 0))
+            {
+                _sizeDelta.y = _viewPortSize.y;
+            }
         }
         else
         {
@@ -738,6 +747,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
             (mLayoutGroup != null && mLayoutGroup is VerticalLayoutGroup)
         )
         {
+            // vertical
             var _targetCount = Mathf.Min(mMaxChildCount, mTotalCount);
 
             for (int i = 0; i < _targetCount; ++i)
@@ -776,6 +786,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
         else if ((mGridLayout != null && mGridLayout.constraint == GridLayoutGroup.Constraint.FixedRowCount) ||
                  (mLayoutGroup != null && mLayoutGroup is HorizontalLayoutGroup))
         {
+            // dont'w show this
         }
     }
 
