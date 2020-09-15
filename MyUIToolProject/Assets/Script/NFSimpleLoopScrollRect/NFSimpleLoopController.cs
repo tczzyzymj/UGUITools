@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
 public class NFSimpleLoopController : MonoBehaviour
 {
     public NFFixsizeLoopScrollRect FixsizeLoopScrollRect;
@@ -46,7 +47,11 @@ public class NFSimpleLoopController : MonoBehaviour
     [ContextMenu("执行初始化")]
     public void Init()
     {
-        FixsizeLoopScrollRect.InitData(InternalRefreshItem, OnInitDataFinish, true);
+        FixsizeLoopScrollRect.InitData(
+            InternalRefreshItem,
+            null,
+            OnInitDataFinish
+        );
     }
 
 

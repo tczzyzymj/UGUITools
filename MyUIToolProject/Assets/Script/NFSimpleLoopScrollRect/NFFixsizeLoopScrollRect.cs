@@ -1,14 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.WindowsRuntime;
-using UnityEditor;
-using UnityEditor.IMGUI.Controls;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Experimental.PlayerLoop;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 
@@ -35,6 +28,12 @@ public class NFFixsizeLoopScrollRect : ScrollRect
     /// first for GameObject, second for gameObject index, third for data index
     /// </summary>
     private Action<GameObject, int, int> mRefreshDataCallback = null;
+
+
+    /// <summary>
+    /// 如果 content 下面没有内容，则需要传入创建函数
+    /// </summary>
+    private Func<GameObject> mCreateNewChildCallback = null;
 
 
     private IEnumerator mCoroutine = null;
@@ -183,12 +182,6 @@ public class NFFixsizeLoopScrollRect : ScrollRect
     }
 
 
-    protected override void Awake()
-    {
-        base.Awake();
-    }
-
-
     /// <summary>
     /// scroll to target, make target move to center of viewport
     /// 默认是滑动到中间，如果超过了 Clamp 的范围则直接停止
@@ -242,12 +235,12 @@ public class NFFixsizeLoopScrollRect : ScrollRect
     /// 初始化函数
     /// </summary>
     /// <param name="refreshCallback">to refresh item callback</param>
+    /// <param name="createChildCallback">create child callback</param>
     /// <param name="createChildEndCallback">for make cache of gameobject of items, can be null</param>
-    /// <param name="autoHideChildFirst">hide new child or just show it</param>
     public bool InitData(
         Action<GameObject, int, int> refreshCallback,
-        Action createChildEndCallback,
-        bool autoHideChildFirst
+        Func<GameObject> createChildCallback,
+        Action createChildEndCallback
     )
     {
         if (mHasInit)
@@ -276,18 +269,13 @@ public class NFFixsizeLoopScrollRect : ScrollRect
             return false;
         }
 
-        if (this.content.childCount < 1)
+        mCreateNewChildCallback = createChildCallback;
+
+        mRefreshDataCallback = refreshCallback;
+
+        if (mCreateNewChildCallback == null && content.childCount < 1)
         {
-            ShowError("Make sure item sample is in content");
-
-            return false;
-        }
-
-        var _childRect = content.GetChild(0).transform as RectTransform;
-
-        if (_childRect == null)
-        {
-            ShowError("Item's rect transform is empty!");
+            ShowError("无法创建新的 Child，请检查！");
 
             return false;
         }
@@ -308,6 +296,37 @@ public class NFFixsizeLoopScrollRect : ScrollRect
         else
         {
             mGridLayout = content.GetComponent<GridLayoutGroup>();
+
+            if (mGridLayout != null)
+            {
+                mGridLayout.enabled = false;
+            }
+        }
+
+        if (content.childCount < 1 && createChildCallback != null)
+        {
+            // first create one
+            var _newGO = createChildCallback.Invoke();
+
+            if (_newGO != null)
+            {
+                _newGO.transform.SetParent(content.transform, false);
+            }
+            else
+            {
+                ShowError("Create new item failed! please check!");
+
+                return false;
+            }
+        }
+
+        var _childRect = content.GetChild(0).transform as RectTransform;
+
+        if (_childRect == null)
+        {
+            ShowError("子节点不包含 RectTransform，请检查！");
+
+            return false;
         }
 
         if (mGridLayout == null)
@@ -324,26 +343,52 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
         mMaxChildCount = GetMaxCount();
 
-        if (content.childCount < mMaxChildCount)
+        if (createChildCallback != null)
         {
-            for (int i = content.childCount; i < mMaxChildCount; ++i)
+            if (content.childCount < mMaxChildCount)
             {
-                var _newGO = GameObject.Instantiate(_childRect.gameObject);
-
-                if (_newGO != null)
+                for (int i = content.childCount; i < mMaxChildCount; ++i)
                 {
-                    _newGO.transform.SetParent(content.transform, false);
-                }
-                else
-                {
-                    ShowError("Create new item failed! please check!");
+                    var _newGO = createChildCallback.Invoke();
 
-                    return false;
+                    if (_newGO != null)
+                    {
+                        _newGO.transform.SetParent(content.transform, false);
+                    }
+                    else
+                    {
+                        ShowError("Create new item failed! please check!");
+
+                        return false;
+                    }
                 }
             }
-
-            createChildEndCallback?.Invoke();
         }
+        else
+        {
+            if (content.childCount < mMaxChildCount)
+            {
+                var _firstChildRect = content.GetChild(0).transform;
+
+                for (int i = content.childCount; i < mMaxChildCount; ++i)
+                {
+                    var _newGO = GameObject.Instantiate(_firstChildRect.gameObject);
+
+                    if (_newGO != null)
+                    {
+                        _newGO.transform.SetParent(content.transform, false);
+                    }
+                    else
+                    {
+                        ShowError("Create new item failed! please check!");
+
+                        return false;
+                    }
+                }
+            }
+        }
+
+        createChildEndCallback?.Invoke();
 
         for (int i = 0; i < mMaxChildCount; ++i)
         {
@@ -352,7 +397,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
             mChildIndexMap.Add(_childGO, i);
 
-            _childGO.SetActive(!autoHideChildFirst);
+            _childGO.SetActive(false);
 
             var _childRectTransform = _childTrans as RectTransform;
 
@@ -369,8 +414,6 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
             _childRectTransform.pivot = new Vector2(0f, 1.0f);
         }
-
-        mRefreshDataCallback = refreshCallback;
 
         // set child size, grid is not good
         if (mGridLayout != null)
@@ -650,7 +693,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
         if (ConstraintCount > 1)
         {
-            _totalCount = Mathf.CeilToInt((float) mTotalCount / ConstraintCount);
+            _totalCount = Mathf.CeilToInt((float)mTotalCount / ConstraintCount);
         }
 
         var _viewPortSize = viewport.rect.size;
@@ -803,28 +846,34 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
         switch (ChildAlignment)
         {
-            case TextAnchor.UpperCenter :
-            {
-                return Padding.left -
-                       Padding.right +
-                       (content.rect.width * 0.5f -
-                        _childWidth * 0.5f +
-                        _childWidth * _pivot.x);
-            }
-            case TextAnchor.UpperLeft :
-            {
-                return Padding.left - Padding.right + _childWidth * _pivot.x + _childWidth * colIndex + Spacing.x * colIndex;
-            }
-            case TextAnchor.UpperRight :
-            {
-                return Padding.left - Padding.right + (content.rect.width - _childWidth * (1 - _pivot.x));
-            }
-            default :
-            {
-                // don't deal other
+            case TextAnchor.UpperCenter:
+                {
+                    var _tempValue = Padding.left -
+                                     Padding.right +
+                                     (content.rect.width * 0.5f -
+                                      _childWidth * 0.5f +
+                                      _childWidth * _pivot.x);
 
-                break;
-            }
+                    return _tempValue;
+                }
+            case TextAnchor.UpperLeft:
+                {
+                    var _tempValue = Padding.left + _childWidth * _pivot.x + _childWidth * colIndex + Spacing.x * colIndex;
+
+                    return _tempValue;
+                }
+            case TextAnchor.UpperRight:
+                {
+                    var _tempValue = Padding.left + (content.rect.width - _childWidth * (1 - _pivot.x));
+
+                    return _tempValue;
+                }
+            default:
+                {
+                    // don't deal other
+
+                    break;
+                }
         }
 
         return 0;
