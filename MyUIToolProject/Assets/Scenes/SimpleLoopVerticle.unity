@@ -303,11 +303,11 @@ RectTransform:
   m_Father: {fileID: 485617346}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -0.000030517578, y: 0}
-  m_SizeDelta: {x: 816, y: 940}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: -0.000061035156, y: -500}
+  m_SizeDelta: {x: 816, y: 1000}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &162005223
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -315,7 +315,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 162005221}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: -2095666955, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
@@ -945,11 +945,11 @@ RectTransform:
   m_Father: {fileID: 162005222}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 142, y: 0}
+  m_SizeDelta: {x: 244, y: 300}
+  m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &816225667
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1710,6 +1710,8 @@ MonoBehaviour:
   FixsizeLoopScrollRect: {fileID: 1254693546}
   CountInputField: {fileID: 1912857868}
   CountInputButton: {fileID: 1711935561}
+  ScrollToIndexInputField: {fileID: 491144087}
+  ScrollToIndexButton: {fileID: 1892389867}
 --- !u!114 &1169391569
 MonoBehaviour:
   m_ObjectHideFlags: 0

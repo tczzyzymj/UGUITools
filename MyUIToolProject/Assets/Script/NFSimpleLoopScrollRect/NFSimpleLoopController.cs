@@ -15,12 +15,20 @@ public class NFSimpleLoopController : MonoBehaviour
     public Button CountInputButton;
 
 
+    public InputField ScrollToIndexInputField;
+
+
+    public Button ScrollToIndexButton;
+
+
     private List<NFLoopVerticleSampleItem> mItemList = new List<NFLoopVerticleSampleItem>();
 
 
     private void Awake()
     {
         CountInputButton.onClick.AddListener(OnClickCountInputButton);
+
+        ScrollToIndexButton.onClick.AddListener(OnClickScrollToTargetButton);
 
         Init();
     }
@@ -41,6 +49,17 @@ public class NFSimpleLoopController : MonoBehaviour
         }
 
         FixsizeLoopScrollRect.SetTotalCount(_targetCount);
+    }
+
+
+    private void OnClickScrollToTargetButton()
+    {
+        if (!int.TryParse(ScrollToIndexInputField.text, out var _targetIndex))
+        {
+            return;
+        }
+
+        this.FixsizeLoopScrollRect.ScrollToCell(_targetIndex, 3000);
     }
 
 

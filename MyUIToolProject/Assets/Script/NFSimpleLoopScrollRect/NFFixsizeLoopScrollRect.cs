@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.UI;
 
 
@@ -192,7 +193,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
     {
         if (index < 0 || index >= mTotalCount)
         {
-            ShowError("越界了！");
+            ShowError($"越界了！下标是：{index}，总数是：{mTotalCount}");
 
             return;
         }
@@ -220,13 +221,61 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
         IsScrolling = true;
 
+
         StartCoroutine(InternalScrollToTarget(index, speed));
     }
 
 
+    private float mMaxMoveDistance = 0;
+
+
     private IEnumerator InternalScrollToTarget(int index, float speed)
     {
-        yield break;
+        var _child = content.GetChild(index) as RectTransform;
+
+        Vector3[] _childCorner = new Vector3[4];
+
+        _child.GetWorldCorners(_childCorner);
+
+        Vector3 _centerPos = Vector3.zero;
+
+        var _tempCorner_0 = viewport.InverseTransformPoint(_childCorner[0]);
+
+        var _tempCorner_1 = viewport.InverseTransformPoint(_childCorner[2]);
+
+        _centerPos = Vector3.Lerp(_tempCorner_0, _tempCorner_1, 0.5f);
+
+        float _span = 0;
+
+        if (vertical)
+        {
+            _span = viewport.rect.center.y - _centerPos.y;
+        }
+        else if (horizontal)
+        {
+            _span = viewport.rect.center.x - _centerPos.x;
+        }
+
+        if (Mathf.Approximately(_span, 0))
+        {
+            yield break;
+        }
+
+        bool _forward = (_span > 0);
+
+        var _finalPos = content.localPosition.y + _span;
+
+        while (true)
+        {
+            var _distance = Time.deltaTime * speed;
+
+            if (_forward == false)
+            {
+                _distance = -_distance;
+            }
+
+            yield return null;
+        }
     }
 
 
@@ -411,8 +460,6 @@ public class NFFixsizeLoopScrollRect : ScrollRect
             _childRectTransform.anchorMax = new Vector2(0f, 1f);
 
             _childRectTransform.anchorMin = new Vector2(0f, 1f);
-
-            _childRectTransform.pivot = new Vector2(0f, 1.0f);
         }
 
         // set child size, grid is not good
@@ -586,7 +633,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
                     }
                 }
 
-                UpdateChildPos();
+                UpdateChildPos(content.childCount - ConstraintCount, content.childCount);
             }
         }
         else
@@ -596,10 +643,22 @@ public class NFFixsizeLoopScrollRect : ScrollRect
                 return;
             }
 
-            // top to down, check last one
-            var _last = content.GetChild(mMaxChildCount - 1);
+            RectTransform _rectTrans = null;
 
-            var _rectTrans = _last.transform as RectTransform;
+            for (int i = content.childCount - 1; i >= 0; --i)
+            {
+                // top to down, check last one
+                var _last = content.GetChild(i);
+
+                if (!_last.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                _rectTrans = _last.transform as RectTransform;
+
+                break;
+            }
 
             if (_rectTrans == null)
             {
@@ -648,7 +707,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
                     }
                 }
 
-                UpdateChildPos();
+                UpdateChildPos(0, ConstraintCount);
             }
         }
     }
@@ -693,7 +752,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
         if (ConstraintCount > 1)
         {
-            _totalCount = Mathf.CeilToInt((float)mTotalCount / ConstraintCount);
+            _totalCount = Mathf.CeilToInt((float) mTotalCount / ConstraintCount);
         }
 
         var _viewPortSize = viewport.rect.size;
@@ -704,10 +763,10 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
             _sizeDelta.y = _height;
 
-            if (_sizeDelta.x < 0 || Mathf.Approximately(_sizeDelta.x, 0))
-            {
-                _sizeDelta.x = _viewPortSize.x;
-            }
+            //if (_sizeDelta.x < 0 || Mathf.Approximately(_sizeDelta.x, 0))
+            //{
+            //    _sizeDelta.x = _viewPortSize.x;
+            //}
         }
         else if (horizontal)
         {
@@ -715,10 +774,10 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
             _sizeDelta.x = _width;
 
-            if (_sizeDelta.y < 0 || Mathf.Approximately(_sizeDelta.y, 0))
-            {
-                _sizeDelta.y = _viewPortSize.y;
-            }
+            //if (_sizeDelta.y < 0 || Mathf.Approximately(_sizeDelta.y, 0))
+            //{
+            //    _sizeDelta.y = _viewPortSize.y;
+            //}
         }
         else
         {
@@ -727,6 +786,31 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
 
         content.sizeDelta = _sizeDelta;
+    }
+
+
+    public void RefillCells()
+    {
+        StopMovement();
+
+        var _pos = content.anchoredPosition;
+
+        if (vertical)
+        {
+            _pos.y = 0;
+        }
+        else if (horizontal)
+        {
+            _pos.x = 0;
+        }
+
+        content.anchoredPosition = _pos;
+
+        StartDataIndex = 0;
+
+        EndDataIndex = Mathf.Min(mTotalCount - 1, mMaxChildCount - 1);
+
+        RefreshCells();
     }
 
 
@@ -756,7 +840,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
         {
             var _dataIndex = StartDataIndex + i;
 
-            if (_dataIndex > mTotalCount)
+            if (_dataIndex >= mTotalCount)
             {
                 break;
             }
@@ -784,16 +868,29 @@ public class NFFixsizeLoopScrollRect : ScrollRect
     /// <summary>
     /// update child position
     /// </summary>
-    private void UpdateChildPos()
+    private void UpdateChildPos(int startIndex = -1, int endIndex = -1)
     {
         if ((mGridLayout != null && mGridLayout.constraint == GridLayoutGroup.Constraint.FixedColumnCount) ||
             (mLayoutGroup != null && mLayoutGroup is VerticalLayoutGroup)
         )
         {
-            // vertical
-            var _targetCount = Mathf.Min(mMaxChildCount, mTotalCount);
+            int _startIndex = 0;
 
-            for (int i = 0; i < _targetCount; ++i)
+            int _endIndex = Mathf.Min(mMaxChildCount, mTotalCount);
+
+            if (startIndex > 0)
+            {
+                _startIndex = startIndex;
+            }
+
+            if (endIndex > 0)
+            {
+                _endIndex = endIndex;
+            }
+
+            var _finalEndIndex = _endIndex;
+
+            for (int i = _startIndex; i < _finalEndIndex; ++i)
             {
                 int _rowIndex = 0;
 
@@ -829,7 +926,6 @@ public class NFFixsizeLoopScrollRect : ScrollRect
         else if ((mGridLayout != null && mGridLayout.constraint == GridLayoutGroup.Constraint.FixedRowCount) ||
                  (mLayoutGroup != null && mLayoutGroup is HorizontalLayoutGroup))
         {
-            // dont'w show this
         }
     }
 
@@ -846,34 +942,35 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
         switch (ChildAlignment)
         {
-            case TextAnchor.UpperCenter:
-                {
-                    var _tempValue = Padding.left -
-                                     Padding.right +
-                                     (content.rect.width * 0.5f -
-                                      _childWidth * 0.5f +
-                                      _childWidth * _pivot.x);
+            case TextAnchor.UpperCenter :
+            {
+                var _tempValue = Padding.left -
+                                 Padding.right +
+                                 (content.rect.width * 0.5f -
+                                  _childWidth * 0.5f +
+                                  _childWidth * _pivot.x);
 
-                    return _tempValue;
-                }
-            case TextAnchor.UpperLeft:
-                {
-                    var _tempValue = Padding.left + _childWidth * _pivot.x + _childWidth * colIndex + Spacing.x * colIndex;
+                return _tempValue;
+            }
+            case TextAnchor.UpperLeft :
+            {
+                var _tempValue = Padding.left + _childWidth * _pivot.x + _childWidth * colIndex + Spacing.x * colIndex;
 
-                    return _tempValue;
-                }
-            case TextAnchor.UpperRight:
-                {
-                    var _tempValue = Padding.left + (content.rect.width - _childWidth * (1 - _pivot.x));
+                return _tempValue;
+            }
+            case TextAnchor.UpperRight :
+            {
+                var _tempValue = Padding.left + (content.rect.width - _childWidth * (1 - _pivot.x));
 
-                    return _tempValue;
-                }
-            default:
-                {
-                    // don't deal other
+                return _tempValue;
+            }
+            default :
+            {
+                // don't deal other
+                ShowError("Child Alignment :{0} not recommend!");
 
-                    break;
-                }
+                break;
+            }
         }
 
         return 0;
