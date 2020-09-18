@@ -59,7 +59,7 @@ public class NFSimpleLoopController : MonoBehaviour
             return;
         }
 
-        this.FixsizeLoopScrollRect.ScrollToCell(_targetIndex, 3000);
+        this.FixsizeLoopScrollRect.ScrollToCell(_targetIndex, 0.3f);
     }
 
 

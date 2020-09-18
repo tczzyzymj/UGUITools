@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.UI;
 
@@ -18,11 +19,7 @@ using UnityEngine.UI;
 /// </summary>
 public class NFFixsizeLoopScrollRect : ScrollRect
 {
-    public bool IsScrolling
-    {
-        get;
-        protected set;
-    }
+    private Vector2 mScrollVelocity;
 
 
     /// <summary>
@@ -188,8 +185,8 @@ public class NFFixsizeLoopScrollRect : ScrollRect
     /// 默认是滑动到中间，如果超过了 Clamp 的范围则直接停止
     /// </summary>
     /// <param name="index"></param>
-    /// <param name="speed"></param>
-    public void ScrollToCell(int index, float speed)
+    /// <param name="effectTime"></param>
+    public void ScrollToCell(int index, float effectTime)
     {
         if (index < 0 || index >= mTotalCount)
         {
@@ -219,19 +216,82 @@ public class NFFixsizeLoopScrollRect : ScrollRect
             mCoroutine = null;
         }
 
-        IsScrolling = true;
+        StopMovement();
 
+        mScrollVelocity = Vector2.zero;
 
-        StartCoroutine(InternalScrollToTarget(index, speed));
+        mCanDrag = false;
+
+        StartCoroutine(InternalScrollToTarget(index, effectTime));
     }
 
 
-    private float mMaxMoveDistance = 0;
+    private bool mCanDrag = true;
 
 
-    private IEnumerator InternalScrollToTarget(int index, float speed)
+    public override void OnDrag(PointerEventData eventData)
     {
-        var _child = content.GetChild(index) as RectTransform;
+        if (!mCanDrag)
+        {
+            return;
+        }
+
+        base.OnDrag(eventData);
+    }
+
+
+    private Vector3 mMoveDest = Vector3.zero;
+
+
+    private float mEffectPlayedTime = 0;
+
+
+    /// <summary>
+    /// 因为是固定大小的，所以输入一个下标可以获得是哪一行
+    /// </summary>
+    /// <returns></returns>
+    private int GetRowIndexByIndex(int index)
+    {
+        int _result = 0;
+
+        while (index >= ConstraintCount)
+        {
+            index -= ConstraintCount;
+            ++_result;
+        }
+
+        return _result;
+    }
+
+
+    /// <summary>
+    /// 因为是固定大小的，所以输入一个 下标可以获得是那一列
+    /// </summary>
+    /// <returns></returns>
+    private int GetColIndexByIndex(int index)
+    {
+        return index % ConstraintCount;
+    }
+
+
+    private float CalculateForMoveDistance(int index)
+    {
+        float _distance = 0;
+
+        int _childIndex = 0;
+
+        bool _isOverview = false;
+
+        if (index >= StartDataIndex && index <= EndDataIndex)
+        {
+            _childIndex = index - StartDataIndex;
+        }
+        else
+        {
+            _isOverview = true;
+        }
+
+        var _child = content.GetChild(_childIndex) as RectTransform;
 
         Vector3[] _childCorner = new Vector3[4];
 
@@ -245,37 +305,156 @@ public class NFFixsizeLoopScrollRect : ScrollRect
 
         _centerPos = Vector3.Lerp(_tempCorner_0, _tempCorner_1, 0.5f);
 
-        float _span = 0;
+        if (_isOverview)
+        {
+            // 如果是超出了范围的，那么就需要增加相对的距离
+
+            if (vertical)
+            {
+                var _fromRowIndex = GetRowIndexByIndex(StartDataIndex);
+
+                var _endRowIndex = GetRowIndexByIndex(index);
+
+                var _rowSpan = _fromRowIndex - _endRowIndex;
+
+                var _tempDisY = _rowSpan * (this.mItemSize.y + Spacing.y);
+
+                _centerPos.y += _tempDisY;
+            }
+            else if (horizontal)
+            {
+                // TODO : 这里需要在写写
+                var _fromeColIndex = GetColIndexByIndex(StartDataIndex);
+
+                var _endColIndex = GetColIndexByIndex(index);
+            }
+        }
 
         if (vertical)
         {
-            _span = viewport.rect.center.y - _centerPos.y;
+            _distance = viewport.rect.center.y - _centerPos.y;
         }
         else if (horizontal)
         {
-            _span = viewport.rect.center.x - _centerPos.x;
+            _distance = viewport.rect.center.x - _centerPos.x;
         }
 
-        if (Mathf.Approximately(_span, 0))
+        return _distance;
+    }
+
+
+    private IEnumerator InternalScrollToTarget(int index, float totalTime)
+    {
+        float _moveDistance = CalculateForMoveDistance(index);
+
+        if (!Mathf.Approximately(_moveDistance, 0))
         {
-            yield break;
-        }
+            // 如果距离是负数，表示 content 要往下移动
+            bool _moveToLess = (_moveDistance < 0);
 
-        bool _forward = (_span > 0);
+            mMoveDest = Vector3.zero;
 
-        var _finalPos = content.localPosition.y + _span;
+            float _maxMoveDistance = 0;
 
-        while (true)
-        {
-            var _distance = Time.deltaTime * speed;
+            mEffectPlayedTime = 0;
 
-            if (_forward == false)
+            if (this.movementType != MovementType.Unrestricted)
             {
-                _distance = -_distance;
+                Vector3[] _contentCorner = new Vector3[4];
+
+                content.GetWorldCorners(_contentCorner);
+
+                // 这里检测一下，看content能移动的最远距离是多少
+                if (_moveToLess)
+                {
+                    var _contentMaxPoint = viewport.InverseTransformPoint(_contentCorner[2]);
+
+                    if (vertical)
+                    {
+                        _maxMoveDistance = viewport.rect.max.y - _contentMaxPoint.y;
+                    }
+                    else if (horizontal)
+                    {
+                        _maxMoveDistance = viewport.rect.max.x - _contentMaxPoint.x;
+                    }
+                }
+                else
+                {
+                    var _minPoint = viewport.InverseTransformPoint(_contentCorner[0]);
+
+                    if (vertical)
+                    {
+                        _maxMoveDistance = viewport.rect.min.y - _minPoint.y;
+                    }
+                    else if (horizontal)
+                    {
+                        _maxMoveDistance = viewport.rect.min.x - _minPoint.x;
+                    }
+                }
             }
 
-            yield return null;
+            if (!Mathf.Approximately(_maxMoveDistance, 0))
+            {
+                if (_moveToLess)
+                {
+                    if (_moveDistance < _maxMoveDistance)
+                    {
+                        _moveDistance = _maxMoveDistance;
+                    }
+
+                    mScrollVelocity.y = -1;
+                }
+                else
+                {
+                    if (_moveDistance > _maxMoveDistance)
+                    {
+                        _moveDistance = _maxMoveDistance;
+                    }
+
+                    mScrollVelocity.y = 1;
+                }
+
+                mMoveDest = content.localPosition;
+
+                var _originLocalPos = mMoveDest;
+
+                if (vertical)
+                {
+                    mMoveDest.y += _moveDistance;
+                }
+                else if (horizontal)
+                {
+                    mMoveDest.x += _moveDistance;
+                }
+
+                while (true)
+                {
+                    mEffectPlayedTime += Time.deltaTime;
+
+                    float _progress = mEffectPlayedTime / totalTime;
+
+                    if (_progress > 1.0f)
+                    {
+                        _progress = 1.0f;
+                    }
+
+                    var _currentPos = Vector3.Lerp(_originLocalPos, mMoveDest, _progress);
+
+                    content.localPosition = _currentPos;
+
+                    if (_progress >= 1.0f)
+                    {
+                        break;
+                    }
+
+                    yield return null;
+                }
+            }
         }
+
+        mCanDrag = true;
+
+        mScrollVelocity = Vector2.zero;
     }
 
 
@@ -545,17 +724,17 @@ public class NFFixsizeLoopScrollRect : ScrollRect
     {
         base.LateUpdate();
 
-        LateUpadateForRefreshChild();
+        CheckChildSwap();
     }
 
 
     /// <summary>
     /// check if child need set pos and refresh
     /// </summary>
-    private void LateUpadateForRefreshChild()
+    private void CheckChildSwap()
     {
         // if not move, then don't check
-        if (velocity.Equals(Vector2.zero))
+        if (velocity.Equals(Vector2.zero) && mScrollVelocity.Equals(Vector2.zero))
         {
             return;
         }
@@ -566,14 +745,7 @@ public class NFFixsizeLoopScrollRect : ScrollRect
             return;
         }
 
-        // here we need to compare with viewport, and coordinate system should use viewport
-
-        if (Mathf.Approximately(velocity.y, 0))
-        {
-            return;
-        }
-
-        if (velocity.y > 0)
+        if (velocity.y > 0 || mScrollVelocity.y > 0)
         {
             if (EndDataIndex + 1 >= mTotalCount)
             {
