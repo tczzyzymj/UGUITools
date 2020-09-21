@@ -305,9 +305,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: 0}
-  m_SizeDelta: {x: 816, y: 1000}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: -398, y: -0.000030517578}
+  m_SizeDelta: {x: 816, y: 730}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &162005223
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -321,14 +321,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 20
+    m_Left: 10
     m_Right: 0
-    m_Top: 0
+    m_Top: 5
     m_Bottom: 0
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 244, y: 300}
+  m_CellSize: {x: 244, y: 226}
   m_Spacing: {x: 20, y: 20}
   m_Constraint: 1
   m_ConstraintCount: 3
@@ -641,7 +641,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 816, y: 730}
+  m_SizeDelta: {x: 796, y: 730}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &485617348
 CanvasRenderer:
@@ -947,9 +947,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 142, y: 0}
-  m_SizeDelta: {x: 244, y: 300}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 132, y: -118.00003}
+  m_SizeDelta: {x: 244, y: 226}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &816225667
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1020,7 +1020,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 26
+    m_FontSize: 22
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 2
@@ -1458,7 +1458,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 26
+    m_FontSize: 22
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 2
@@ -1469,7 +1469,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Speed
+  m_Text: Scroll Time
 --- !u!222 &1119002054
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1707,7 +1707,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a3cb5c8298cbf342816e868e55ff5af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FixsizeLoopScrollRect: {fileID: 1254693546}
+  FixsizeLoopScrollRectBase: {fileID: 1254693546}
   CountInputField: {fileID: 1912857868}
   CountInputButton: {fileID: 1711935561}
   ScrollToIndexInputField: {fileID: 491144087}
@@ -1798,7 +1798,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1254693544}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aeb6e15a7d6fb7145b4622e163fcfae7, type: 3}
+  m_Script: {fileID: 11500000, guid: 9a0b8246d2a133540b7d50643bf2c52e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Content: {fileID: 162005222}
@@ -2656,7 +2656,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 26
+    m_FontSize: 22
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 2
@@ -2667,7 +2667,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Scroll Index
+  m_Text: Scroll To Index
 --- !u!222 &1974033324
 CanvasRenderer:
   m_ObjectHideFlags: 0

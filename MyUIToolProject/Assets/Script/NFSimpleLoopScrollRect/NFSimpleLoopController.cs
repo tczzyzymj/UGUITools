@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class NFSimpleLoopController : MonoBehaviour
 {
-    public NFFixsizeLoopScrollRect FixsizeLoopScrollRect;
+    public NFFixsizeLoopScrollRectBase FixsizeLoopScrollRectBase;
 
 
     public InputField CountInputField;
@@ -48,7 +48,7 @@ public class NFSimpleLoopController : MonoBehaviour
             return;
         }
 
-        FixsizeLoopScrollRect.SetTotalCount(_targetCount);
+        FixsizeLoopScrollRectBase.SetTotalCount(_targetCount);
     }
 
 
@@ -59,14 +59,14 @@ public class NFSimpleLoopController : MonoBehaviour
             return;
         }
 
-        this.FixsizeLoopScrollRect.ScrollToCell(_targetIndex, 0.3f);
+        this.FixsizeLoopScrollRectBase.ScrollToCell(_targetIndex, 0.3f);
     }
 
 
     [ContextMenu("执行初始化")]
     public void Init()
     {
-        FixsizeLoopScrollRect.InitData(
+        FixsizeLoopScrollRectBase.InitData(
             InternalRefreshItem,
             null,
             OnInitDataFinish
@@ -77,13 +77,13 @@ public class NFSimpleLoopController : MonoBehaviour
     [ContextMenu("刷新数据")]
     public void RefreshData()
     {
-        FixsizeLoopScrollRect.RefreshCells();
+        FixsizeLoopScrollRectBase.RefreshCells();
     }
 
 
     private void OnInitDataFinish()
     {
-        var _contentTrans = FixsizeLoopScrollRect.content.transform;
+        var _contentTrans = FixsizeLoopScrollRectBase.content.transform;
 
         for (int i = 0; i < _contentTrans.childCount; ++i)
         {
