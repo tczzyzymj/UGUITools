@@ -42,33 +42,6 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
     }
 
 
-    private float CalculateChildPosX(int rowIndex, int colIndex, RectTransform childRectTransform)
-    {
-        // 这里先计算出 (0.5, 0.5) 的 local position 
-
-        float _tempPosX = childRectTransform.pivot.x * mItemSize.x +
-                          colIndex * (mItemSize.x + Spacing.x) +
-                          Padding.left;
-
-        return _tempPosX;
-    }
-
-
-    private float CalculateChildPosY(int rowIndex, int colIndex, RectTransform childRectTransform)
-    {
-        var _pivot = childRectTransform.pivot;
-
-        var _childHeight = childRectTransform.rect.height;
-
-        var _posY = -(Padding.top +
-                      rowIndex * (Spacing.y + _childHeight) +
-                      _childHeight * (1 - _pivot.y)
-            );
-
-        return _posY;
-    }
-
-
     protected override void CheckChildSwap()
     {
         // if not move, then don't check
@@ -267,7 +240,7 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
                 continue;
             }
 
-            _child.anchoredPosition = new Vector3(
+            _child.localPosition = new Vector3(
                 CalculateChildPosX(_rowIndex, _colIndex, _child),
                 CalculateChildPosY(_rowIndex, _colIndex, _child),
                 0

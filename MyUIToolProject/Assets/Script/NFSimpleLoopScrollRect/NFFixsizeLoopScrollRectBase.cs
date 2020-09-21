@@ -447,9 +447,9 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
                 return false;
             }
 
-            _childRectTransform.anchorMax = new Vector2(0f, 1f);
+            //_childRectTransform.anchorMax = new Vector2(0f, 1f);
 
-            _childRectTransform.anchorMin = new Vector2(0f, 1f);
+            //_childRectTransform.anchorMin = new Vector2(0f, 1f);
         }
 
         // set child size, grid is not good
@@ -474,18 +474,30 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     }
 
 
-    private void InitForChildAlignment(RectTransform childRect)
+    protected float CalculateChildPosX(int rowIndex, int colIndex, RectTransform childRectTransform)
     {
-        if (childRect == null)
-        {
-            ShowError("Child rect transform is empty! Please check!");
+        // 这里先计算出 (0.5, 0.5) 的 local position 
 
-            return;
-        }
+        float _tempPosX = childRectTransform.pivot.x * mItemSize.x +
+                          colIndex * (mItemSize.x + Spacing.x) +
+                          Padding.left;
 
-        childRect.anchorMin = new Vector2(0, 1);
+        return _tempPosX;
+    }
 
-        childRect.anchorMax = new Vector2(0, 1);
+
+    protected float CalculateChildPosY(int rowIndex, int colIndex, RectTransform childRectTransform)
+    {
+        var _pivot = childRectTransform.pivot;
+
+        var _childHeight = childRectTransform.rect.height;
+
+        var _posY = -(Padding.top +
+                      rowIndex * (Spacing.y + _childHeight) +
+                      _childHeight * (1 - _pivot.y)
+            );
+
+        return _posY;
     }
 
 
