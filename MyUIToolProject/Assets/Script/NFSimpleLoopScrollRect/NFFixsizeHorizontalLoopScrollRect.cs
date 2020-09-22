@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml.Schema;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.UI;
@@ -58,139 +59,266 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
 
         if (velocity.x > 0 || mScrollVelocity.x > 0)
         {
-            if (StartDataIndex - 1 < 0)
+            InternalUpdateMoveToMore();
+        }
+        else
+        {
+            InternalUpdateMoveToLess();
+        }
+    }
+
+
+    private void InternalUpdateMoveToMore()
+    {
+        if (StartDataIndex - 1 < 0)
+        {
+            return;
+        }
+
+        var _childCount = content.childCount;
+
+        bool _updatePos = false;
+
+        bool _isOverview = false;
+
+        int _moveCount = 0;
+
+        for (int i = _childCount - 1; i >= 0; i -= ConstraintCount)
+        {
+            var _childRect = content.GetChild(_childCount - 1) as RectTransform;
+
+            if (_childRect == null)
             {
-                return;
-            }
+                ShowError("子节点没有 RectTransform 请检查！");
 
-            RectTransform _rectTrans = null;
-
-            for (int i = content.childCount - 1; i >= 0; --i)
-            {
-                // top to down, check last one
-                var _last = content.GetChild(i);
-
-                if (!_last.gameObject.activeInHierarchy)
-                {
-                    continue;
-                }
-
-                _rectTrans = _last.transform as RectTransform;
-
-                break;
-            }
-
-            if (_rectTrans == null)
-            {
-                ShowError("There's no RectTransform in child! Please check!");
-
-                return;
+                continue;
             }
 
             Vector3[] _childPointArray = new Vector3[4];
 
-            _rectTrans.GetWorldCorners(_childPointArray);
+            _childRect.GetWorldCorners(_childPointArray);
 
-            // only need 0 , as min.y
             var _min = viewport.InverseTransformPoint(_childPointArray[0]);
 
-            if (_min.x > viewport.rect.max.x)
-            {
-                for (int i = 0; i < ConstraintCount; ++i)
-                {
-                    var _childTrans = content.GetChild(content.childCount - 1) as RectTransform;
+            var _viewPortMaxX = viewport.rect.max.x;
 
-                    if (_childTrans == null)
+            if (_min.x > _viewPortMaxX)
+            {
+                if (StartDataIndex <= 0)
+                {
+                    break;
+                }
+
+                _updatePos = true;
+
+                for (int j = i; j > i - ConstraintCount; --j)
+                {
+                    RectTransform _targetRectTrans = null;
+
+                    if (j == i)
+                    {
+                        _targetRectTrans = _childRect;
+                    }
+                    else
+                    {
+                        _targetRectTrans = content.GetChild(_childCount - 1) as RectTransform;
+                    }
+
+                    if (_targetRectTrans == null)
                     {
                         continue;
                     }
 
-                    _childTrans.SetAsFirstSibling();
+                    ++_moveCount;
+
+                    _targetRectTrans.SetAsFirstSibling();
 
                     StartDataIndex--;
 
                     EndDataIndex--;
 
-                    if (StartDataIndex < 0)
+                    if (j == i && !_isOverview)
                     {
-                        _childTrans.gameObject.SetActive(false);
-                    }
-                    else
-                    {
-                        _childTrans.gameObject.SetActive(true);
+                        var _targetSpan = mMaxSpanCount - 1;
 
-                        mRefreshDataCallback(
-                            _childTrans.gameObject,
-                            mChildIndexMap[_childTrans.gameObject],
-                            StartDataIndex
-                        );
+                        var _tempMinX = _min.x;
+
+                        do
+                        {
+                            ++_targetSpan;
+                            _tempMinX = _min.x - (_targetSpan * mItemSize.x + (_targetSpan - 1) * Spacing.x);
+                        } while (_tempMinX > _viewPortMaxX);
+
+                        var _span = _targetSpan - mMaxSpanCount;
+
+                        if (_span > 0)
+                        {
+                            _isOverview = true;
+
+                            StartDataIndex -= (ConstraintCount * _span);
+
+                            EndDataIndex -= (ConstraintCount * _span);
+                        }
                     }
+
+                    _targetRectTrans.gameObject.SetActive(true);
+
+                    mRefreshDataCallback(
+                        _targetRectTrans.gameObject,
+                        mChildIndexMap[_targetRectTrans.gameObject],
+                        StartDataIndex
+                    );
                 }
-
-                UpdateChildPos(0, ConstraintCount);
+            }
+            else
+            {
+                break;
             }
         }
-        else
+
+        if (_updatePos)
         {
-            if (EndDataIndex + 1 >= TotalCount)
+            if (_isOverview)
             {
-                return;
+                UpdateChildPos();
+            }
+            else
+            {
+                UpdateChildPos(0, _moveCount);
+            }
+        }
+    }
+
+
+    private void InternalUpdateMoveToLess()
+    {
+        if (EndDataIndex + 1 >= TotalCount)
+        {
+            return;
+        }
+
+        var _childCount = content.childCount;
+
+        bool _updatePos = false;
+
+        bool _isOverview = false;
+
+        int _changeCount = 0;
+
+        for (int i = 0; i < _childCount; i += ConstraintCount)
+        {
+            if (EndDataIndex >= TotalCount)
+            {
+                break;
             }
 
-            // down to top, check first one
-            // test first acitve game object and last one
-            var _first = content.GetChild(0);
+            var _childRect = content.GetChild(0) as RectTransform;
 
-            var _rectTrans = _first.transform as RectTransform;
-
-            if (_rectTrans == null)
+            if (_childRect == null)
             {
-                ShowError("There's no RectTransform in child! Please check!");
+                ShowError("子节点没有 RectTransform 请检查！");
 
-                return;
+                continue;
             }
 
             Vector3[] _childPointArray = new Vector3[4];
 
-            _rectTrans.GetWorldCorners(_childPointArray);
+            _childRect.GetWorldCorners(_childPointArray);
 
-            // only need 0 , as min.y
             var _max = viewport.InverseTransformPoint(_childPointArray[2]);
 
-            if (_max.x < viewport.rect.min.x)
-            {
-                for (int i = 0; i < ConstraintCount; ++i)
-                {
-                    var _childTrans = content.GetChild(0) as RectTransform;
+            var _viewPortMinPosY = viewport.rect.min.x;
 
-                    if (_childTrans == null)
+            if (_max.x < _viewPortMinPosY)
+            {
+                _updatePos = true;
+
+                for (int j = i; j < i + ConstraintCount; ++j)
+                {
+                    RectTransform _targetRectTrans = null;
+
+                    if (j == i)
+                    {
+                        _targetRectTrans = _childRect;
+                    }
+                    else
+                    {
+                        _targetRectTrans = content.GetChild(0) as RectTransform;
+                    }
+
+                    if (_targetRectTrans == null)
                     {
                         continue;
                     }
 
-                    _childTrans.SetAsLastSibling();
+                    _targetRectTrans.SetAsLastSibling();
+
+                    ++_changeCount;
 
                     EndDataIndex++;
 
                     StartDataIndex++;
 
+                    if (j == i && !_isOverview)
+                    {
+                        var _targetSpan = mMaxSpanCount - 1;
+
+                        var _tempMaxX = _max.x;
+
+                        // 这里要检测一下，如果 StartDataIndex-- 的地方还是不能显示，那么继续减少
+                        do
+                        {
+                            ++_targetSpan;
+
+                            _tempMaxX = _max.x + (_targetSpan * mItemSize.x + (_targetSpan - 1) * Spacing.x);
+                        } while (_tempMaxX < _viewPortMinPosY);
+
+                        var _span = _targetSpan - mMaxSpanCount;
+
+                        if (_span > 0)
+                        {
+                            _isOverview = true;
+
+                            StartDataIndex += (ConstraintCount * _span);
+
+                            EndDataIndex += (ConstraintCount * _span);
+                        }
+                    }
+
                     if (EndDataIndex >= TotalCount)
                     {
-                        _childTrans.gameObject.SetActive(false);
+                        _targetRectTrans.gameObject.SetActive(false);
                     }
                     else
                     {
-                        _childTrans.gameObject.SetActive(true);
+                        _targetRectTrans.gameObject.SetActive(true);
 
                         mRefreshDataCallback(
-                            _childTrans.gameObject,
-                            mChildIndexMap[_childTrans.gameObject],
+                            _targetRectTrans.gameObject,
+                            mChildIndexMap[_targetRectTrans.gameObject],
                             EndDataIndex
                         );
                     }
                 }
+            }
+            else
+            {
+                break;
+            }
+        }
 
-                UpdateChildPos(content.childCount - ConstraintCount, content.childCount);
+        if (_updatePos)
+        {
+            if (_isOverview)
+            {
+                UpdateChildPos();
+            }
+            else
+            {
+                UpdateChildPos(
+                    content.childCount - _changeCount,
+                    content.childCount
+                );
             }
         }
     }
@@ -245,6 +373,43 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
                 CalculateChildPosY(_rowIndex, _colIndex, _child),
                 0
             );
+        }
+    }
+
+
+    protected override float CalculateChildPosY(int rowIndex, int colIndex, RectTransform childRectTransform)
+    {
+        if (mGridLayout != null)
+        {
+            return base.CalculateChildPosY(rowIndex, colIndex, childRectTransform);
+        }
+
+        switch (ChildAlignment)
+        {
+            case TextAnchor.UpperLeft :
+            {
+                return base.CalculateChildPosY(rowIndex, colIndex, childRectTransform);
+            }
+
+            case TextAnchor.LowerLeft :
+            {
+                var _tempY = -content.rect.height +
+                             mItemSize.y * childRectTransform.pivot.y +
+                             Padding.top -
+                             Padding.bottom;
+
+                return _tempY;
+            }
+            case TextAnchor.MiddleLeft :
+            default :
+            {
+                var _tempY = -content.rect.height * 0.5f +
+                             mItemSize.y * (childRectTransform.pivot.y - 0.5f) +
+                             Padding.top -
+                             Padding.bottom;
+
+                return _tempY;
+            }
         }
     }
 

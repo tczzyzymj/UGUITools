@@ -82,11 +82,6 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
 
         int _changeCount = 0;
 
-        if (EndDataIndex >= TotalCount)
-        {
-            return;
-        }
-
         for (int i = 0; i < _childCount; i += ConstraintCount)
         {
             if (EndDataIndex >= TotalCount)
@@ -152,6 +147,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
                         do
                         {
                             ++_targetSpan;
+
                             _tempPosY = _minPos.y - (_targetSpan * mItemSize.y + (_targetSpan - 1) * Spacing.y);
                         } while (_tempPosY > viewport.rect.max.y);
 
@@ -213,8 +209,6 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
             return;
         }
 
-        // 可能出现移动速度特别大的情况，得从第一个开始
-
         var _childCount = content.childCount;
 
         bool _updatePos = false;
@@ -222,11 +216,6 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
         bool _isOverview = false;
 
         int _moveCount = 0;
-
-        if (StartDataIndex <= 0)
-        {
-            return;
-        }
 
         for (int i = _childCount - 1; i >= 0; i -= ConstraintCount)
         {
@@ -287,14 +276,14 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
                     {
                         var _targetSpan = mMaxSpanCount - 1;
 
-                        var _tempPosY = _maxPos.y;
+                        var _tempMaxY = _maxPos.y;
 
                         // 这里要检测一下，如果 StartDataIndex-- 的地方还是不能显示，那么继续减少
                         do
                         {
                             ++_targetSpan;
-                            _tempPosY = _maxPos.y + (_targetSpan * mItemSize.y + (_targetSpan - 1) * Spacing.y);
-                        } while (_tempPosY < _viewPortMinPosY);
+                            _tempMaxY = _maxPos.y + (_targetSpan * mItemSize.y + (_targetSpan - 1) * Spacing.y);
+                        } while (_tempMaxY < _viewPortMinPosY);
 
                         var _span = _targetSpan - mMaxSpanCount;
 
@@ -396,33 +385,31 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
     {
         if (mGridLayout != null)
         {
-            var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
-                            colIndex * (mItemSize.x + Spacing.x) +
-                            Padding.left;
-
-            return _tempPosX;
+            return base.CalculateChildPosX(rowIndex, colIndex, childRectTransform);
         }
 
         switch (ChildAlignment)
         {
             case TextAnchor.UpperLeft :
             {
-                var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
-                                colIndex * (mItemSize.x + Spacing.x) +
-                                Padding.left;
-
-                return _tempPosX;
+                return base.CalculateChildPosX(rowIndex, colIndex, childRectTransform);
             }
             case TextAnchor.UpperRight :
             {
-                var _tempX = content.rect.width - (1 - childRectTransform.pivot.x) * mItemSize.x;
+                var _tempX = content.rect.width -
+                             (1 - childRectTransform.pivot.x) * mItemSize.x +
+                             Padding.left -
+                             Padding.right;
 
                 return _tempX;
             }
             case TextAnchor.UpperCenter :
             default :
             {
-                var _tempX = content.rect.width * 0.5f + (childRectTransform.pivot.x - 0.5f) * mItemSize.x;
+                var _tempX = content.rect.width * 0.5f +
+                             (childRectTransform.pivot.x - 0.5f) * mItemSize.x +
+                             Padding.left -
+                             Padding.right;
 
                 return _tempX;
             }

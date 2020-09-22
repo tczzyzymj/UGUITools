@@ -487,7 +487,7 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     {
         var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
                         colIndex * (mItemSize.x + Spacing.x) +
-                        Padding.left;
+                        Padding.left - Padding.right;
 
         return _tempPosX;
     }
