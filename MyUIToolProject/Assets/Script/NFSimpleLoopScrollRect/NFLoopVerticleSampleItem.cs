@@ -11,5 +11,7 @@ public class NFLoopVerticleSampleItem : MonoBehaviour
     public void RefreshData(int index)
     {
         TargetText.text = (index + 1).ToString();
+
+        this.gameObject.name = TargetText.text;
     }
 }

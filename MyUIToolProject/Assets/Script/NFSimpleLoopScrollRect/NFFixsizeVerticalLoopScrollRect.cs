@@ -80,6 +80,8 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
 
         bool _isOverview = false;
 
+        int _changeCount = 0;
+
         if (EndDataIndex >= TotalCount)
         {
             return;
@@ -92,7 +94,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
                 break;
             }
 
-            var _childRect = content.GetChild(i) as RectTransform;
+            var _childRect = content.GetChild(0) as RectTransform;
 
             if (_childRect == null)
             {
@@ -134,20 +136,24 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
 
                     _targetRectTrans.SetAsLastSibling();
 
+                    ++_changeCount;
+
                     EndDataIndex++;
 
                     StartDataIndex++;
 
-                    if (j == i)
+                    if (j == i && !_isOverview)
                     {
                         var _targetSpan = mMaxSpanCount - 1;
+
+                        var _tempPosY = _minPos.y;
 
                         // 这里要检测一下，如果 StartDataIndex-- 的地方还是不能显示，那么继续减少
                         do
                         {
                             ++_targetSpan;
-                            _minPos.y -= (_targetSpan * mItemSize.y + (_targetSpan - 1) * Spacing.y);
-                        } while (_minPos.y > viewport.rect.max.y);
+                            _tempPosY = _minPos.y - (_targetSpan * mItemSize.y + (_targetSpan - 1) * Spacing.y);
+                        } while (_tempPosY > viewport.rect.max.y);
 
                         var _span = _targetSpan - mMaxSpanCount;
 
@@ -192,7 +198,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
             else
             {
                 UpdateChildPos(
-                    content.childCount - ConstraintCount,
+                    content.childCount - _changeCount,
                     content.childCount
                 );
             }
@@ -215,6 +221,8 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
 
         bool _isOverview = false;
 
+        int _moveCount = 0;
+
         if (StartDataIndex <= 0)
         {
             return;
@@ -222,7 +230,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
 
         for (int i = _childCount - 1; i >= 0; i -= ConstraintCount)
         {
-            var _childRect = content.GetChild(i) as RectTransform;
+            var _childRect = content.GetChild(_childCount - 1) as RectTransform;
 
             if (_childRect == null)
             {
@@ -267,22 +275,26 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
                         continue;
                     }
 
+                    ++_moveCount;
+
                     _targetRectTrans.SetAsFirstSibling();
 
                     StartDataIndex--;
 
                     EndDataIndex--;
 
-                    if (j == i)
+                    if (j == i && !_isOverview)
                     {
                         var _targetSpan = mMaxSpanCount - 1;
+
+                        var _tempPosY = _maxPos.y;
 
                         // 这里要检测一下，如果 StartDataIndex-- 的地方还是不能显示，那么继续减少
                         do
                         {
                             ++_targetSpan;
-                            _maxPos.y += (_targetSpan * mItemSize.y + (_targetSpan - 1) * Spacing.y);
-                        } while (_maxPos.y < _viewPortMinPosY);
+                            _tempPosY = _maxPos.y + (_targetSpan * mItemSize.y + (_targetSpan - 1) * Spacing.y);
+                        } while (_tempPosY < _viewPortMinPosY);
 
                         var _span = _targetSpan - mMaxSpanCount;
 
@@ -309,11 +321,6 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
             {
                 break;
             }
-
-            if (!_isOverview)
-            {
-                break;
-            }
         }
 
         if (_updatePos)
@@ -324,7 +331,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
             }
             else
             {
-                UpdateChildPos(0, ConstraintCount);
+                UpdateChildPos(0, _moveCount);
             }
         }
     }
@@ -374,11 +381,13 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
                 continue;
             }
 
-            _child.anchoredPosition = new Vector3(
+            var _targetPos = new Vector3(
                 CalculateChildPosX(_rowIndex, _colIndex, _child),
                 CalculateChildPosY(_rowIndex, _colIndex, _child),
                 0
             );
+
+            _child.anchoredPosition = _targetPos;
         }
     }
 
