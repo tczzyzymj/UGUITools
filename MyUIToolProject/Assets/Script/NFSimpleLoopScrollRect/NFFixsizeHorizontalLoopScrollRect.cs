@@ -240,7 +240,7 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
                 continue;
             }
 
-            _child.localPosition = new Vector3(
+            _child.anchoredPosition = new Vector3(
                 CalculateChildPosX(_rowIndex, _colIndex, _child),
                 CalculateChildPosY(_rowIndex, _colIndex, _child),
                 0
@@ -405,15 +405,17 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
 
                     content.localPosition = _currentPos;
 
+                    yield return null;
+
                     if (_progress >= 1.0f)
                     {
                         break;
                     }
-
-                    yield return null;
                 }
             }
         }
+
+        yield return null;
 
         mCanDrag = true;
 

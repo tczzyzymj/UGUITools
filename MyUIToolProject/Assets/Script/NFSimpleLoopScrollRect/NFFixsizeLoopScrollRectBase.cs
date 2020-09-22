@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.UI;
 
 
@@ -253,6 +254,12 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
 
 
     /// <summary>
+    /// 横跨的最大行数或者列数
+    /// </summary>
+    protected int mMaxSpanCount = 0;
+
+
+    /// <summary>
     /// 因为是固定大小的，所以输入一个下标可以获得是哪一行
     /// </summary>
     /// <returns></returns>
@@ -382,6 +389,8 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
 
         mMaxChildCount = CalculateMaxChildCount();
 
+        mMaxSpanCount = mMaxChildCount / ConstraintCount;
+
         if (createChildCallback != null)
         {
             if (content.childCount < mMaxChildCount)
@@ -447,9 +456,9 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
                 return false;
             }
 
-            //_childRectTransform.anchorMax = new Vector2(0f, 1f);
+            _childRectTransform.anchorMax = new Vector2(0, 1f);
 
-            //_childRectTransform.anchorMin = new Vector2(0f, 1f);
+            _childRectTransform.anchorMin = new Vector2(0, 1f);
         }
 
         // set child size, grid is not good
@@ -474,19 +483,17 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     }
 
 
-    protected float CalculateChildPosX(int rowIndex, int colIndex, RectTransform childRectTransform)
+    protected virtual float CalculateChildPosX(int rowIndex, int colIndex, RectTransform childRectTransform)
     {
-        // 这里先计算出 (0.5, 0.5) 的 local position 
-
-        float _tempPosX = childRectTransform.pivot.x * mItemSize.x +
-                          colIndex * (mItemSize.x + Spacing.x) +
-                          Padding.left;
+        var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
+                        colIndex * (mItemSize.x + Spacing.x) +
+                        Padding.left;
 
         return _tempPosX;
     }
 
 
-    protected float CalculateChildPosY(int rowIndex, int colIndex, RectTransform childRectTransform)
+    protected virtual float CalculateChildPosY(int rowIndex, int colIndex, RectTransform childRectTransform)
     {
         var _pivot = childRectTransform.pivot;
 
