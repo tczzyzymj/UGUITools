@@ -398,8 +398,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
             {
                 var _tempX = content.rect.width -
                              (1 - childRectTransform.pivot.x) * mItemSize.x +
-                             Padding.left -
-                             Padding.right;
+                             Padding.left;
 
                 return _tempX;
             }
@@ -408,8 +407,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
             {
                 var _tempX = content.rect.width * 0.5f +
                              (childRectTransform.pivot.x - 0.5f) * mItemSize.x +
-                             Padding.left -
-                             Padding.right;
+                             Padding.left;
 
                 return _tempX;
             }

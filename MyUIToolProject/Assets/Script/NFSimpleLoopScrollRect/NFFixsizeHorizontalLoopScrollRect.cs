@@ -395,8 +395,7 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
             {
                 var _tempY = -content.rect.height +
                              mItemSize.y * childRectTransform.pivot.y +
-                             Padding.top -
-                             Padding.bottom;
+                             Padding.top;
 
                 return _tempY;
             }
@@ -405,8 +404,7 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
             {
                 var _tempY = -content.rect.height * 0.5f +
                              mItemSize.y * (childRectTransform.pivot.y - 0.5f) +
-                             Padding.top -
-                             Padding.bottom;
+                             Padding.top;
 
                 return _tempY;
             }
