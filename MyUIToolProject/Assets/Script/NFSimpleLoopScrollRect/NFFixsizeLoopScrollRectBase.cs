@@ -37,6 +37,9 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     private Func<GameObject> mCreateNewChildCallback = null;
 
 
+    private Action mCreateChildEndCallback = null;
+
+
     private IEnumerator mCoroutine = null;
 
 
@@ -193,7 +196,7 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     /// </summary>
     /// <param name="index"></param>
     /// <param name="effectTime"></param>
-    public void ScrollToCell(int index, float effectTime)
+    public void CenterOnCell(int index, float effectTime)
     {
         if (index < 0 || index >= TotalCount)
         {
@@ -276,6 +279,9 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     protected abstract IEnumerator InternalScrollToTarget(int index, float totalTime);
 
 
+    private bool mHasCreateChild = false;
+
+
     /// <summary>
     /// init function
     /// 初始化函数
@@ -283,10 +289,12 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     /// <param name="refreshCallback">to refresh item callback</param>
     /// <param name="createChildCallback">create child callback</param>
     /// <param name="createChildEndCallback">for make cache of gameobject of items, can be null</param>
+    /// <param name="createChild">是否直接创建子节点，有一些需求可能不需要一开始就创建</param>
     public bool InitData(
         Action<GameObject, int, int> refreshCallback,
         Func<GameObject> createChildCallback,
-        Action createChildEndCallback
+        Action createChildEndCallback,
+        bool createChild
     )
     {
         if (mHasInit)
@@ -315,22 +323,27 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
             return false;
         }
 
+        mCreateChildEndCallback = createChildEndCallback;
+
         mCreateNewChildCallback = createChildCallback;
 
         mRefreshDataCallback = refreshCallback;
 
         if (mCreateNewChildCallback == null && content.childCount < 1)
         {
-            ShowError("无法创建新的 Child，请检查！");
+            ShowError("当前条件下无法创建新的 Child，请检查！");
 
             return false;
         }
 
-        var _contentSizeFitter = content.GetComponent<ContentSizeFitter>();
-
-        if (_contentSizeFitter != null)
+        // 不要用这个组件，该组件会增加消耗，因为单个 item 的大小是确定的，那么总的大小可以根据数量算出来
         {
-            _contentSizeFitter.enabled = false;
+            var _contentSizeFitter = content.GetComponent<ContentSizeFitter>();
+
+            if (_contentSizeFitter != null)
+            {
+                _contentSizeFitter.enabled = false;
+            }
         }
 
         mLayoutGroup = content.GetComponent<HorizontalOrVerticalLayoutGroup>();
@@ -349,10 +362,52 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
             }
         }
 
-        if (content.childCount < 1 && createChildCallback != null)
+        if (createChild)
         {
-            // first create one
-            var _newGO = createChildCallback.Invoke();
+            InternalCreateChild();
+        }
+
+        mHasInit = true;
+
+        return true;
+    }
+
+
+    private bool InternalInitAfterCreateChild()
+    {
+        for (int i = 0; i < content.childCount; ++i)
+        {
+            var _child = content.GetChild(i) as RectTransform;
+
+            if (_child != null)
+            {
+                _child.sizeDelta = mItemSize;
+
+                _child.name = i.ToString();
+            }
+        }
+
+        return true;
+    }
+
+
+    private bool InternalCreateChild()
+    {
+        if (mHasCreateChild)
+        {
+            return true;
+        }
+
+        if (mCreateNewChildCallback == null && content.childCount < 1)
+        {
+            ShowError("错误，无法创建 新的 Child，请检查！");
+
+            return false;
+        }
+
+        if (mCreateNewChildCallback != null && content.childCount < 1)
+        {
+            var _newGO = mCreateNewChildCallback.Invoke();
 
             if (_newGO != null)
             {
@@ -391,13 +446,13 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
 
         mMaxSpanCount = mMaxChildCount / ConstraintCount;
 
-        if (createChildCallback != null)
+        if (mCreateNewChildCallback != null)
         {
             if (content.childCount < mMaxChildCount)
             {
                 for (int i = content.childCount; i < mMaxChildCount; ++i)
                 {
-                    var _newGO = createChildCallback.Invoke();
+                    var _newGO = mCreateNewChildCallback.Invoke();
 
                     if (_newGO != null)
                     {
@@ -436,7 +491,7 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
             }
         }
 
-        createChildEndCallback?.Invoke();
+        mCreateChildEndCallback?.Invoke();
 
         for (int i = 0; i < mMaxChildCount; ++i)
         {
@@ -461,23 +516,12 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
             _childRectTransform.anchorMin = new Vector2(0, 1f);
         }
 
-        // set child size, grid is not good
-        if (mGridLayout != null)
+        if (!InternalInitAfterCreateChild())
         {
-            for (int i = 0; i < content.childCount; ++i)
-            {
-                var _child = content.GetChild(i) as RectTransform;
-
-                if (_child != null)
-                {
-                    _child.sizeDelta = mItemSize;
-
-                    _child.name = i.ToString();
-                }
-            }
+            return false;
         }
 
-        mHasInit = true;
+        mHasCreateChild = true;
 
         return true;
     }
@@ -590,7 +634,6 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
             ShowError("Please choose way of scroll direction!");
         }
 
-
         content.sizeDelta = _sizeDelta;
     }
 
@@ -598,6 +641,11 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     public void RefillCells()
     {
         StopMovement();
+
+        if (!mHasCreateChild)
+        {
+            InternalCreateChild();
+        }
 
         var _pos = content.anchoredPosition;
 
@@ -627,6 +675,11 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
             ShowError("Please init first!");
 
             return;
+        }
+
+        if (!mHasCreateChild)
+        {
+            InternalCreateChild();
         }
 
         if (mIsFirstRefresh)
