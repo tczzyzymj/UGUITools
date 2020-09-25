@@ -59,7 +59,7 @@ public class NFSimpleLoopController : MonoBehaviour
             return;
         }
 
-        this.FixsizeLoopScrollRectBase.ScrollToCell(_targetIndex, 0.3f);
+        this.FixsizeLoopScrollRectBase.CenterOnCell(_targetIndex, 0.3f);
     }
 
 
@@ -69,7 +69,8 @@ public class NFSimpleLoopController : MonoBehaviour
         FixsizeLoopScrollRectBase.InitData(
             InternalRefreshItem,
             null,
-            OnInitDataFinish
+            OnInitDataFinish,
+            true
         );
     }
 

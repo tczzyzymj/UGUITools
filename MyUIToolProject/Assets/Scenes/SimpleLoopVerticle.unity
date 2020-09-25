@@ -815,7 +815,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -398.00003, y: -0.000030517578}
+  m_AnchoredPosition: {x: -398.00006, y: -0.000030517578}
   m_SizeDelta: {x: 796, y: 730}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &162005223
@@ -2833,11 +2833,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 705181153}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a0b8246d2a133540b7d50643bf2c52e, type: 3}
+  m_Script: {fileID: 11500000, guid: 24d3586ed3aabf648a972ebf9a291ed3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Content: {fileID: 145970905}
-  m_Horizontal: 0
+  m_Horizontal: 1
   m_Vertical: 1
   m_MovementType: 1
   m_Elasticity: 0.1
@@ -5739,7 +5739,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1254693544}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1659479a312188b419c8064223f94896, type: 3}
+  m_Script: {fileID: 11500000, guid: 2a7336ec0a3cbaf4eb5ef00acdd7cba1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Content: {fileID: 162005222}
@@ -6634,12 +6634,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1425184204}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1659479a312188b419c8064223f94896, type: 3}
+  m_Script: {fileID: 11500000, guid: 2a7336ec0a3cbaf4eb5ef00acdd7cba1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Content: {fileID: 685123653}
   m_Horizontal: 1
-  m_Vertical: 0
+  m_Vertical: 1
   m_MovementType: 1
   m_Elasticity: 0.1
   m_Inertia: 1
@@ -7503,11 +7503,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1719601884}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a0b8246d2a133540b7d50643bf2c52e, type: 3}
+  m_Script: {fileID: 11500000, guid: 24d3586ed3aabf648a972ebf9a291ed3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Content: {fileID: 1678914589}
-  m_Horizontal: 0
+  m_Horizontal: 1
   m_Vertical: 1
   m_MovementType: 1
   m_Elasticity: 0.1
