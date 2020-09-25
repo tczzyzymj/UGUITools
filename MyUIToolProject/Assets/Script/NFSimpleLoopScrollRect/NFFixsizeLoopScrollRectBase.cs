@@ -579,13 +579,16 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     {
         if (TotalCount > targetCount)
         {
-            EndDataIndex = targetCount - 1;
-
-            StartDataIndex = EndDataIndex + 1 - mMaxChildCount;
-
-            if (StartDataIndex < 0)
+            if (EndDataIndex >= targetCount)
             {
-                StartDataIndex = 0;
+                EndDataIndex = targetCount - 1;
+
+                StartDataIndex = EndDataIndex + 1 - mMaxChildCount;
+
+                if (StartDataIndex < 0)
+                {
+                    StartDataIndex = 0;
+                }
             }
         }
         else if (targetCount > TotalCount)
