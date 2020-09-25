@@ -19,6 +19,31 @@ public class NFFixsizeVerticalLoopScrollRect : NFFixsizeLoopScrollRectBase
     }
 
 
+    protected override void CalculateItemSize(RectTransform childRect)
+    {
+        if (childRect == null)
+        {
+            return;
+        }
+
+        if (mGridLayout != null)
+        {
+            mItemSize = mGridLayout.cellSize;
+
+            return;
+        }
+
+        if (mLayoutGroup != null && mLayoutGroup.childForceExpandWidth)
+        {
+            mItemSize = new Vector2(content.rect.width, childRect.rect.height);
+        }
+        else
+        {
+            mItemSize = new Vector2(childRect.rect.width, childRect.rect.height);
+        }
+    }
+
+
     protected override int CalculateMaxChildCount()
     {
         float _maxSize = 0;

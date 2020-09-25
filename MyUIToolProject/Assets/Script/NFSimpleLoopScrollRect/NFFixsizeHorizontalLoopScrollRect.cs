@@ -347,6 +347,31 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
     }
 
 
+    protected override void CalculateItemSize(RectTransform childRect)
+    {
+        if (childRect == null)
+        {
+            return;
+        }
+
+        if (mGridLayout != null)
+        {
+            mItemSize = mGridLayout.cellSize;
+
+            return;
+        }
+
+        if (mLayoutGroup != null && mLayoutGroup.childForceExpandHeight)
+        {
+            mItemSize = new Vector2(childRect.rect.width, content.rect.height);
+        }
+        else
+        {
+            mItemSize = new Vector2(childRect.rect.width, childRect.rect.height);
+        }
+    }
+
+
     protected override void UpdateAllChildPos()
     {
         int _startIndex = 0;

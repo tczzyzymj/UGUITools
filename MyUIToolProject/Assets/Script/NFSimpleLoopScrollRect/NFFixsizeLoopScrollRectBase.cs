@@ -167,10 +167,10 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     private bool mIsFirstRefresh = true;
 
 
-    protected int TotalCount
+    public int TotalCount
     {
         get;
-        set;
+        private set;
     }
 
 
@@ -391,6 +391,10 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     }
 
 
+    protected abstract void CalculateItemSize(RectTransform childRect);
+    
+
+
     private bool InternalCreateChild()
     {
         if (mHasCreateChild)
@@ -430,15 +434,7 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
             return false;
         }
 
-        if (mGridLayout == null)
-        {
-            mItemSize = new Vector2(_childRect.rect.width, _childRect.rect.height);
-        }
-        else
-        {
-            mGridLayout.enabled = false;
-            mItemSize = mGridLayout.cellSize;
-        }
+        CalculateItemSize(_childRect);
 
         mHalfItemSize = mItemSize * 0.5f;
 
@@ -604,8 +600,6 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
         TotalCount = targetCount;
 
         UpdateContentSize();
-
-        RefreshCells();
     }
 
 
