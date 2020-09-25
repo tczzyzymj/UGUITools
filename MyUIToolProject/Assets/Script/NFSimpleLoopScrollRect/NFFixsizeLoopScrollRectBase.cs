@@ -289,12 +289,12 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     /// <param name="refreshCallback">to refresh item callback</param>
     /// <param name="createChildCallback">create child callback</param>
     /// <param name="createChildEndCallback">for make cache of gameobject of items, can be null</param>
-    /// <param name="createChild">是否直接创建子节点，有一些需求可能不需要一开始就创建</param>
+    /// <param name="createChildNow">是否直接创建子节点，有一些需求可能不需要一开始就创建</param>
     public bool InitData(
         Action<GameObject, int, int> refreshCallback,
         Func<GameObject> createChildCallback,
         Action createChildEndCallback,
-        bool createChild
+        bool createChildNow
     )
     {
         if (mHasInit)
@@ -362,7 +362,7 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
             }
         }
 
-        if (createChild)
+        if (createChildNow)
         {
             InternalCreateChild();
         }
@@ -606,35 +606,12 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     }
 
 
-    private void UpdateContentSize()
+    protected virtual void UpdateContentSize()
     {
-        var _sizeDelta = content.sizeDelta;
-
-        var _totalCount = TotalCount;
-
-        if (ConstraintCount > 1)
+        if (!mHasCreateChild)
         {
-            _totalCount = Mathf.CeilToInt((float) TotalCount / ConstraintCount);
+            InternalCreateChild();
         }
-
-        if (vertical)
-        {
-            var _height = _totalCount * mItemSize.y + (_totalCount - 1) * Spacing.y + Padding.top + Padding.bottom;
-
-            _sizeDelta.y = _height;
-        }
-        else if (horizontal)
-        {
-            var _width = _totalCount * mItemSize.x + (_totalCount - 1) * Spacing.x + Padding.left + Padding.right;
-
-            _sizeDelta.x = _width;
-        }
-        else
-        {
-            ShowError("Please choose way of scroll direction!");
-        }
-
-        content.sizeDelta = _sizeDelta;
     }
 
 
@@ -720,14 +697,18 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
             _childTrans.gameObject.SetActive(false);
         }
 
-        UpdateChildPos();
+        UpdateAllChildPos();
     }
 
 
     /// <summary>
-    /// 更新子节点的位置
+    /// 更新所有子节点的位置
     /// </summary>
-    /// <param name="childStartIndex">开始的子节点的位置</param>
-    /// <param name="childEndIndex">结束的子节点的位置</param>
-    protected abstract void UpdateChildPos(int childStartIndex = -1, int childEndIndex = -1);
+    protected abstract void UpdateAllChildPos();
+
+
+    /// <summary>
+    /// 更新单个
+    /// </summary>
+    protected abstract void UpdateSingleChildPosByDataIndex();
 }

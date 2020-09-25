@@ -180,11 +180,11 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
         {
             if (_isOverview)
             {
-                UpdateChildPos();
+                UpdateAllChildPos();
             }
             else
             {
-                UpdateChildPos(0, _moveCount);
+                UpdateAllChildPos();
             }
         }
     }
@@ -311,34 +311,47 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
         {
             if (_isOverview)
             {
-                UpdateChildPos();
+                UpdateAllChildPos();
             }
             else
             {
-                UpdateChildPos(
-                    content.childCount - _changeCount,
-                    content.childCount
-                );
+                UpdateAllChildPos();
             }
         }
     }
 
 
-    protected override void UpdateChildPos(int childStartIndex = -1, int childEndIndex = -1)
+    protected override void UpdateSingleChildPosByDataIndex()
+    {
+    }
+
+
+    protected override void UpdateContentSize()
+    {
+        base.UpdateContentSize();
+
+        var _sizeDelta = content.sizeDelta;
+
+        var _totalCount = TotalCount;
+
+        if (ConstraintCount > 1)
+        {
+            _totalCount = Mathf.CeilToInt((float) TotalCount / ConstraintCount);
+        }
+
+        var _width = _totalCount * mItemSize.x + (_totalCount - 1) * Spacing.x + Padding.left + Padding.right;
+
+        _sizeDelta.x = _width;
+
+        content.sizeDelta = _sizeDelta;
+    }
+
+
+    protected override void UpdateAllChildPos()
     {
         int _startIndex = 0;
 
         int _endIndex = Mathf.Min(mMaxChildCount, TotalCount);
-
-        if (childStartIndex > 0)
-        {
-            _startIndex = childStartIndex;
-        }
-
-        if (childEndIndex > 0)
-        {
-            _endIndex = childEndIndex;
-        }
 
         var _finalEndIndex = _endIndex;
 
