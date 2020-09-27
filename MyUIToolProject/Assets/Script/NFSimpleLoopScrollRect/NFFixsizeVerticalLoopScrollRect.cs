@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
+public class NFFixSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 {
     protected override void Awake()
     {
