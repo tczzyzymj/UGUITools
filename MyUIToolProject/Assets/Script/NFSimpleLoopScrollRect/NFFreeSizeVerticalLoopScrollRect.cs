@@ -3,10 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using RectTransform = UnityEngine.RectTransform;
 
 
-public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
+public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 {
+    public float MinChildHeight = 100f;
+
+
     protected override void Awake()
     {
         base.Awake();
@@ -17,28 +21,14 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
     }
 
 
+    /// <summary>
+    /// 这里不能计算
+    /// </summary>
+    /// <param name="childRect"></param>
     protected override void CalculateItemSize(RectTransform childRect)
     {
-        if (childRect == null)
-        {
-            return;
-        }
-
-        if (mGridLayout != null)
-        {
-            mItemSize = mGridLayout.cellSize;
-
-            return;
-        }
-
-        if (mLayoutGroup != null && mLayoutGroup.childForceExpandWidth)
-        {
-            mItemSize = new Vector2(content.rect.width, childRect.rect.height);
-        }
-        else
-        {
-            mItemSize = new Vector2(childRect.rect.width, childRect.rect.height);
-        }
+        mItemSize.x = childRect.rect.width;
+        mItemSize.y = MinChildHeight;
     }
 
 
@@ -48,7 +38,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
         float _targetSize = 0;
 
-        _targetSize = mItemSize.y;
+        _targetSize = MinChildHeight;
 
         _maxSize = this.viewport.rect.height;
 
@@ -99,11 +89,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
         var _childCount = content.childCount;
 
-        bool _updatePos = false;
-
         bool _isOverview = false;
-
-        int _changeCount = 0;
 
         for (int i = 0; i < _childCount; i += ConstraintCount)
         {
@@ -132,8 +118,6 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
             if (_minPos.y > _viewPortMaxPosY)
             {
-                _updatePos = true;
-
                 for (int j = i; j < i + ConstraintCount; ++j)
                 {
                     RectTransform _targetRectTrans = null;
@@ -153,8 +137,6 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
                     }
 
                     _targetRectTrans.SetAsLastSibling();
-
-                    ++_changeCount;
 
                     EndDataIndex++;
 
@@ -194,10 +176,20 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
                     {
                         _targetRectTrans.gameObject.SetActive(true);
 
+                        var _gameIndex = mChildIndexMap[_targetRectTrans.gameObject];
+
                         RefreshChildData(
                             _targetRectTrans.gameObject,
-                            mChildIndexMap[_targetRectTrans.gameObject],
+                            _gameIndex,
                             EndDataIndex
+                        );
+
+                        var _preRect = content.GetChild(content.childCount - 2) as RectTransform;
+
+                        // 这里更新一下单个的位置
+                        UpdateSingleChildPosByDataIndex(
+                            _targetRectTrans,
+                            _preRect
                         );
                     }
                 }
@@ -208,16 +200,9 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
             }
         }
 
-        if (_updatePos)
+        if (_isOverview)
         {
-            if (_isOverview)
-            {
-                UpdateAllChildPos();
-            }
-            else
-            {
-                UpdateAllChildPos();
-            }
+            UpdateAllChildPos();
         }
     }
 
@@ -252,11 +237,7 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
         var _childCount = content.childCount;
 
-        bool _updatePos = false;
-
         bool _isOverview = false;
-
-        int _moveCount = 0;
 
         for (int i = _childCount - 1; i >= 0; i -= ConstraintCount)
         {
@@ -285,8 +266,6 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
                     break;
                 }
 
-                _updatePos = true;
-
                 for (int j = i; j > i - ConstraintCount; --j)
                 {
                     RectTransform _targetRectTrans = null;
@@ -304,8 +283,6 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
                     {
                         continue;
                     }
-
-                    ++_moveCount;
 
                     _targetRectTrans.SetAsFirstSibling();
 
@@ -340,10 +317,19 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
                     _targetRectTrans.gameObject.SetActive(true);
 
+                    var _gameIndex = mChildIndexMap[_targetRectTrans.gameObject];
+
                     RefreshChildData(
                         _targetRectTrans.gameObject,
-                        mChildIndexMap[_targetRectTrans.gameObject],
+                        _gameIndex,
                         StartDataIndex
+                    );
+
+                    var _preChildRect = content.GetChild(1) as RectTransform;
+
+                    UpdateSingleChildPosByDataIndex(
+                        _targetRectTrans,
+                        _preChildRect
                     );
                 }
             }
@@ -353,86 +339,141 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
             }
         }
 
-        if (_updatePos)
+        if (_isOverview)
         {
-            if (_isOverview)
-            {
-                UpdateAllChildPos();
-            }
-            else
-            {
-                UpdateAllChildPos();
-            }
+            UpdateAllChildPos();
         }
+    }
+
+
+    protected override void RefreshChildData(GameObject go, int goIndex, int dataIndex)
+    {
+        base.RefreshChildData(go, goIndex, dataIndex);
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(go.transform as RectTransform);
+    }
+
+
+    protected void UpdateSingleChildPosByDataIndex(
+        RectTransform targetRect,
+        RectTransform preRectTransform
+    )
+    {
+        if (targetRect == null)
+        {
+            ShowError("错误，传入的 RectTransform 为空，请检查！");
+
+            return;
+        }
+
+        var _targetPos = new Vector3(
+            CalculateChildPosX(targetRect),
+            CalculateChildPosY(targetRect, preRectTransform),
+            0
+        );
+
+        targetRect.anchoredPosition = _targetPos;
     }
 
 
     protected override void UpdateAllChildPos()
     {
-        int _startIndex = 0;
-
         int _endIndex = Mathf.Min(mMaxChildCount, TotalCount);
 
-        var _finalEndIndex = _endIndex;
-
-        for (int i = _startIndex; i < _finalEndIndex; ++i)
+        if (mRefreshFromFront)
         {
-            int _rowIndex = 0;
-
-            int _compareIndex = i + StartDataIndex;
-
-            int _colIndex = _compareIndex;
-
-            while (_compareIndex >= ConstraintCount)
+            for (int i = 0; i < _endIndex; ++i)
             {
-                _compareIndex -= ConstraintCount;
+                var _child = content.GetChild(i) as RectTransform;
 
-                ++_rowIndex;
+                if (_child == null)
+                {
+                    ShowError("Get child RectTransform error! Please check!");
 
-                _colIndex = _compareIndex;
+                    continue;
+                }
+
+                RectTransform _preChild = null;
+
+                if (i > 0)
+                {
+                    _preChild = content.GetChild(i - 1) as RectTransform;
+                }
+
+                var _targetPos = new Vector3(
+                    CalculateChildPosX(_child),
+                    CalculateChildPosY(_child, _preChild),
+                    0
+                );
+
+                _child.anchoredPosition = _targetPos;
             }
-
-            var _child = content.GetChild(i) as RectTransform;
-
-            if (_child == null)
+        }
+        else
+        {
+            for (int i = _endIndex - 1; i >= 0; --i)
             {
-                ShowError("Get child RectTransform error! Please check!");
+                var _child = content.GetChild(i) as RectTransform;
 
-                continue;
+                if (_child == null)
+                {
+                    ShowError("Get child RectTransform error! Please check!");
+
+                    continue;
+                }
+
+                RectTransform _preChild = null;
+
+                if (i != _endIndex - 1)
+                {
+                    _preChild = content.GetChild(i + 1) as RectTransform;
+                }
+
+                var _targetPos = new Vector3(
+                    CalculateChildPosX(_child),
+                    CalculateChildPosY(_child, _preChild),
+                    0
+                );
+
+                _child.anchoredPosition = _targetPos;
             }
-
-            var _targetPos = new Vector3(
-                CalculateChildPosX(_rowIndex, _colIndex, _child),
-                CalculateChildPosY(_rowIndex, _colIndex, _child),
-                0
-            );
-
-            _child.anchoredPosition = _targetPos;
         }
     }
 
 
-    protected float CalculateChildPosY(int rowIndex, int colIndex, RectTransform childRectTransform)
+    protected float CalculateChildPosY(
+        RectTransform childRectTransform,
+        RectTransform preChildRectTransform
+    )
     {
-        var _pivot = childRectTransform.pivot;
-
         var _childHeight = childRectTransform.rect.height;
 
-        var _posY = -(Padding.top +
-                      rowIndex * (Spacing.y + _childHeight) +
-                      _childHeight * (1 - _pivot.y)
-            );
+        float _posY = 0;
+
+        if (preChildRectTransform == null)
+        {
+            // 这里认为是第一个
+            _posY = -(Padding.top + _childHeight * (1 - childRectTransform.pivot.y));
+        }
+        else
+        {
+            _posY = preChildRectTransform.localPosition.y -
+                    (Spacing.y +
+                     _childHeight * (1 - childRectTransform.pivot.y) +
+                     preChildRectTransform.rect.height * (1 - preChildRectTransform.pivot.y));
+        }
 
         return _posY;
     }
 
 
-    protected float CalculateChildPosX(int rowIndex, int colIndex, RectTransform childRectTransform)
+    protected float CalculateChildPosX(
+        RectTransform childRectTransform
+    )
     {
         if (mGridLayout != null)
         {
             var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
-                            colIndex * (mItemSize.x + Spacing.x) +
                             Padding.left;
 
             return _tempPosX;
@@ -443,7 +484,6 @@ public class NFFixsizeVerticalLoopScrollRect : NFLoopScrollRectBase
             case TextAnchor.UpperLeft :
             {
                 var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
-                                colIndex * (mItemSize.x + Spacing.x) +
                                 Padding.left;
 
                 return _tempPosX;

@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Xml.Schema;
 using UnityEngine;
-using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.UI;
 
 
-[AddComponentMenu("NFFixsizeHorizontalLoopScrollRect")]
-public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
+public class NFFixsizeHorizontalLoopScrollRect : NFLoopScrollRectBase
 {
     protected override void Awake()
     {
@@ -163,7 +160,7 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
 
                     _targetRectTrans.gameObject.SetActive(true);
 
-                    mRefreshDataCallback(
+                    RefreshChildData(
                         _targetRectTrans.gameObject,
                         mChildIndexMap[_targetRectTrans.gameObject],
                         StartDataIndex
@@ -293,7 +290,7 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
                     {
                         _targetRectTrans.gameObject.SetActive(true);
 
-                        mRefreshDataCallback(
+                        RefreshChildData(
                             _targetRectTrans.gameObject,
                             mChildIndexMap[_targetRectTrans.gameObject],
                             EndDataIndex
@@ -318,11 +315,6 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
                 UpdateAllChildPos();
             }
         }
-    }
-
-
-    protected override void UpdateSingleChildPosByDataIndex()
-    {
     }
 
 
@@ -415,18 +407,46 @@ public class NFFixsizeHorizontalLoopScrollRect : NFFixsizeLoopScrollRectBase
     }
 
 
-    protected override float CalculateChildPosY(int rowIndex, int colIndex, RectTransform childRectTransform)
+    protected float CalculateChildPosX(int rowIndex, int colIndex, RectTransform childRectTransform)
+    {
+        var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
+                        colIndex * (mItemSize.x + Spacing.x) +
+                        Padding.left;
+
+        return _tempPosX;
+    }
+
+
+    protected float CalculateChildPosY(int rowIndex, int colIndex, RectTransform childRectTransform)
     {
         if (mGridLayout != null)
         {
-            return base.CalculateChildPosY(rowIndex, colIndex, childRectTransform);
+            var _pivot = childRectTransform.pivot;
+
+            var _childHeight = childRectTransform.rect.height;
+
+            var _posY = -(Padding.top +
+                          rowIndex * (Spacing.y + _childHeight) +
+                          _childHeight * (1 - _pivot.y)
+                );
+
+            return _posY;
         }
 
         switch (ChildAlignment)
         {
             case TextAnchor.UpperLeft :
             {
-                return base.CalculateChildPosY(rowIndex, colIndex, childRectTransform);
+                var _pivot = childRectTransform.pivot;
+
+                var _childHeight = childRectTransform.rect.height;
+
+                var _posY = -(Padding.top +
+                              rowIndex * (Spacing.y + _childHeight) +
+                              _childHeight * (1 - _pivot.y)
+                    );
+
+                return _posY;
             }
 
             case TextAnchor.LowerLeft :

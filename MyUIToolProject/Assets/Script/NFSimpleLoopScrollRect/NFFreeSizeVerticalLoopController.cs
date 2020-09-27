@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class NFSimpleLoopController : MonoBehaviour
+public class NFFreeSizeVerticalLoopController : MonoBehaviour
 {
     public NFLoopScrollRectBase FixsizeLoopScrollRectBase;
 
@@ -21,7 +21,8 @@ public class NFSimpleLoopController : MonoBehaviour
     public Button ScrollToIndexButton;
 
 
-    private List<NFLoopVerticleSampleItem> mItemList = new List<NFLoopVerticleSampleItem>();
+    private List<NFFreesizeLoopVerticleSampleItem> mItemList =
+        new List<NFFreesizeLoopVerticleSampleItem>();
 
 
     private void Awake()
@@ -49,6 +50,8 @@ public class NFSimpleLoopController : MonoBehaviour
         }
 
         FixsizeLoopScrollRectBase.SetTotalCount(_targetCount);
+
+        FixsizeLoopScrollRectBase.RefreshCells();
     }
 
 
@@ -90,7 +93,7 @@ public class NFSimpleLoopController : MonoBehaviour
         {
             var _child = _contentTrans.GetChild(i);
 
-            var _targetCO = _child.gameObject.GetComponent<NFLoopVerticleSampleItem>();
+            var _targetCO = _child.gameObject.GetComponent<NFFreesizeLoopVerticleSampleItem>();
 
             mItemList.Add(_targetCO);
         }

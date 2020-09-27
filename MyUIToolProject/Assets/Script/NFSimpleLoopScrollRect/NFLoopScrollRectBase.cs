@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Experimental.PlayerLoop;
@@ -20,7 +21,7 @@ using UnityEngine.UI;
 [AddComponentMenu("")]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(RectTransform))]
-public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
+public abstract class NFLoopScrollRectBase : ScrollRect
 {
     protected Vector2 mScrollVelocity;
 
@@ -373,7 +374,7 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     }
 
 
-    private bool InternalInitAfterCreateChild()
+    protected virtual bool InternalInitAfterCreateChild()
     {
         for (int i = 0; i < content.childCount; ++i)
         {
@@ -392,7 +393,6 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
 
 
     protected abstract void CalculateItemSize(RectTransform childRect);
-    
 
 
     private bool InternalCreateChild()
@@ -523,31 +523,6 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     }
 
 
-    protected virtual float CalculateChildPosX(int rowIndex, int colIndex, RectTransform childRectTransform)
-    {
-        var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
-                        colIndex * (mItemSize.x + Spacing.x) +
-                        Padding.left;
-
-        return _tempPosX;
-    }
-
-
-    protected virtual float CalculateChildPosY(int rowIndex, int colIndex, RectTransform childRectTransform)
-    {
-        var _pivot = childRectTransform.pivot;
-
-        var _childHeight = childRectTransform.rect.height;
-
-        var _posY = -(Padding.top +
-                      rowIndex * (Spacing.y + _childHeight) +
-                      _childHeight * (1 - _pivot.y)
-            );
-
-        return _posY;
-    }
-
-
     protected abstract int CalculateMaxChildCount();
 
 
@@ -612,8 +587,22 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     }
 
 
-    public void RefillCells()
+    protected bool mRefreshFromFront = true;
+
+
+    /// <summary>
+    /// 从尾部开始刷
+    /// </summary>
+    public virtual void RefillCellsFromEnd()
     {
+        mRefreshFromFront = false;
+    }
+
+
+    public virtual void RefillCells()
+    {
+        mRefreshFromFront = true;
+
         StopMovement();
 
         if (!mHasCreateChild)
@@ -684,7 +673,7 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
 
             _childGO.SetActive(true);
 
-            mRefreshDataCallback.Invoke(_childGO, mChildIndexMap[_childGO], _dataIndex);
+            RefreshChildData(_childGO, mChildIndexMap[_childGO], _dataIndex);
         }
 
         for (int i = _validCount; i < mMaxChildCount; ++i)
@@ -698,14 +687,21 @@ public abstract class NFFixsizeLoopScrollRectBase : ScrollRect
     }
 
 
+    protected virtual void RefreshChildData(GameObject go, int goIndex, int dataIndex)
+    {
+        if (mRefreshDataCallback == null)
+        {
+            ShowError("刷新的回调函数为空，请检查！");
+
+            return;
+        }
+
+        mRefreshDataCallback.Invoke(go, goIndex, dataIndex);
+    }
+
+
     /// <summary>
     /// 更新所有子节点的位置
     /// </summary>
     protected abstract void UpdateAllChildPos();
-
-
-    /// <summary>
-    /// 更新单个
-    /// </summary>
-    protected abstract void UpdateSingleChildPosByDataIndex();
 }
