@@ -9,7 +9,7 @@ using RectTransform = UnityEngine.RectTransform;
 /// <summary>
 /// 先测试一下不改变内容是否能够确认位置
 /// </summary>
-public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRectBase
+public class NFFreeSizeFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRectBase
 {
     public float MinChildHeight = 100f;
 
@@ -380,41 +380,6 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
             ),
             0
         );
-
-        if (mChildPositionMap.ContainsKey(dataIndex))
-        {
-            var _oldPos = mChildPositionMap[dataIndex];
-
-            var _posSpan = _oldPos - _targetPos.y;
-
-            _targetPos.y = _oldPos;
-
-            if (!Mathf.Approximately(_posSpan, 0))
-            {
-                // 如果发生了大小的变化，那么需要做调整了
-                if (updateFromFront)
-                {
-                    for (int i = 1; i < content.childCount; ++i)
-                    {
-                        var _child = content.GetChild(i) as RectTransform;
-
-                        var _tempPosition = _child.anchoredPosition;
-
-                        _tempPosition.y += _posSpan;
-
-                        _child.anchoredPosition = _tempPosition;
-                    }
-
-                    {
-                        var _tempPosition = content.anchoredPosition;
-
-                        _tempPosition.y -= _posSpan;
-
-                        content.anchoredPosition = _tempPosition;
-                    }
-                }
-            }
-        }
 
         targetRect.anchoredPosition = _targetPos;
     }

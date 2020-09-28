@@ -4,7 +4,7 @@ using UnityEngine;
 using Random = System.Random;
 
 
-public class NFFreeSizeLoopVerticleSampleItem : MonoBehaviour
+public class NFFreeSizeFixDataSampleItem : MonoBehaviour
 {
     public Text TargetText;
 

@@ -9,7 +9,7 @@ using RectTransform = UnityEngine.RectTransform;
 /// <summary>
 /// 先测试一下不改变内容是否能够确认位置
 /// </summary>
-public class NFFreeSizeFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRectBase
+public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRectBase
 {
     public float MinChildHeight = 100f;
 
@@ -371,29 +371,44 @@ public class NFFreeSizeFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRectB
             return;
         }
 
-        var _targetPos = new Vector3(
+        if (mRefreshFromFront && dataIndex == 0)
+        {
+            preRectTransform = null;
+        }
+
+        Vector2 _targetPos = new Vector2(
             CalculateChildPosX(targetRect),
             CalculateChildPosY(
                 targetRect,
                 preRectTransform,
                 updateFromFront
-            ),
-            0
+            )
         );
 
-        if (mChildPositionMap.ContainsKey(dataIndex))
+        if (mChildPositionMap.ContainsKey(dataIndex) && mChildHeightMap.ContainsKey(dataIndex))
         {
             var _oldPos = mChildPositionMap[dataIndex];
 
             var _posSpan = _oldPos - _targetPos.y;
 
-            _targetPos.y = _oldPos;
+            ShowError(
+                string.Format(
+                    "Index is :{0},_posSpan is : {1}",
+                    dataIndex,
+                    _posSpan
+                )
+            );
 
             if (!Mathf.Approximately(_posSpan, 0))
             {
                 // 如果发生了大小的变化，那么需要做调整了
                 if (updateFromFront)
                 {
+                    //if (dataIndex != 0)
+                    //{
+                    //    _targetPos.y = _oldPos;
+                    //}
+
                     for (int i = 1; i < content.childCount; ++i)
                     {
                         var _child = content.GetChild(i) as RectTransform;
@@ -403,20 +418,24 @@ public class NFFreeSizeFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRectB
                         _tempPosition.y += _posSpan;
 
                         _child.anchoredPosition = _tempPosition;
+
+                        mChildPositionMap[dataIndex + i] = _tempPosition.y;
                     }
 
-                    {
-                        var _tempPosition = content.anchoredPosition;
+                    //{
+                    //    var _tempPosition = content.localPosition;
 
-                        _tempPosition.y -= _posSpan;
+                    //    _tempPosition.y += _posSpan;
 
-                        content.anchoredPosition = _tempPosition;
-                    }
+                    //    content.localPosition = _tempPosition;
+                    //}
                 }
             }
         }
 
         targetRect.anchoredPosition = _targetPos;
+
+        mChildPositionMap[dataIndex] = _targetPos.y;
     }
 
 

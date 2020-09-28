@@ -21,8 +21,8 @@ public class NFFreeSizeVerticalLoopController : MonoBehaviour
     public Button ScrollToIndexButton;
 
 
-    private List<NFFreeSizeLoopVerticleSampleItem> mItemList =
-        new List<NFFreeSizeLoopVerticleSampleItem>();
+    private List<NFFreeSizeFixDataSampleItem> mItemList =
+        new List<NFFreeSizeFixDataSampleItem>();
 
 
     private static string mStr = "啊";
@@ -121,7 +121,7 @@ public class NFFreeSizeVerticalLoopController : MonoBehaviour
         {
             var _child = _contentTrans.GetChild(i);
 
-            var _targetCO = _child.gameObject.GetComponent<NFFreeSizeLoopVerticleSampleItem>();
+            var _targetCO = _child.gameObject.GetComponent<NFFreeSizeFixDataSampleItem>();
 
             mItemList.Add(_targetCO);
         }

@@ -8,7 +8,7 @@ public class NFLoopVerticleSampleItem : MonoBehaviour
     public Text TargetText;
 
 
-    public void RefreshData(int index)
+    public virtual void RefreshData(int index)
     {
         TargetText.text = (index + 1).ToString();
 
