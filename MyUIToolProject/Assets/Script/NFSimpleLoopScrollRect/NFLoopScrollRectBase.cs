@@ -35,19 +35,30 @@ public abstract class NFLoopScrollRectBase : ScrollRect
     /// <summary>
     /// 如果 content 下面没有内容，则需要传入创建函数
     /// </summary>
-    private Func<GameObject> mCreateNewChildCallback = null;
+    protected Func<GameObject> mCreateNewChildCallback = null;
 
 
-    private Action mCreateChildEndCallback = null;
+    protected Action mCreateChildEndCallback = null;
 
 
     private IEnumerator mCoroutine = null;
 
 
+    private int mStartDataIndex = 0;
+
+
     protected int StartDataIndex
     {
-        get;
-        set;
+        get
+        {
+            return mStartDataIndex;
+        }
+        set
+        {
+            mStartDataIndex = value;
+
+            Debug.LogError("mStartDataIndex  is : " + mStartDataIndex);
+        }
     }
 
 
@@ -61,10 +72,7 @@ public abstract class NFLoopScrollRectBase : ScrollRect
     protected Dictionary<GameObject, int> mChildIndexMap = new Dictionary<GameObject, int>();
 
 
-    protected Vector2 mItemSize = Vector2.zero;
 
-
-    protected Vector2 mHalfItemSize = Vector2.zero;
 
 
     public int ConstraintCount
@@ -175,9 +183,6 @@ public abstract class NFLoopScrollRectBase : ScrollRect
     }
 
 
-    private readonly Vector3[] m_Corners = new Vector3[4];
-
-
     protected override void OnDisable()
     {
         base.OnDisable();
@@ -258,12 +263,6 @@ public abstract class NFLoopScrollRectBase : ScrollRect
 
 
     /// <summary>
-    /// 横跨的最大行数或者列数
-    /// </summary>
-    protected int mMaxSpanCount = 0;
-
-
-    /// <summary>
     /// 因为是固定大小的，所以输入一个下标可以获得是哪一行
     /// </summary>
     /// <returns></returns>
@@ -280,7 +279,7 @@ public abstract class NFLoopScrollRectBase : ScrollRect
     protected abstract IEnumerator InternalScrollToTarget(int index, float totalTime);
 
 
-    private bool mHasCreateChild = false;
+    protected bool mHasCreateChild = false;
 
 
     /// <summary>
@@ -382,8 +381,6 @@ public abstract class NFLoopScrollRectBase : ScrollRect
 
             if (_child != null)
             {
-                _child.sizeDelta = mItemSize;
-
                 _child.name = i.ToString();
             }
         }
@@ -395,7 +392,7 @@ public abstract class NFLoopScrollRectBase : ScrollRect
     protected abstract void CalculateItemSize(RectTransform childRect);
 
 
-    private bool InternalCreateChild()
+    protected virtual bool InternalCreateChild()
     {
         if (mHasCreateChild)
         {
@@ -436,11 +433,7 @@ public abstract class NFLoopScrollRectBase : ScrollRect
 
         CalculateItemSize(_childRect);
 
-        mHalfItemSize = mItemSize * 0.5f;
-
         mMaxChildCount = CalculateMaxChildCount();
-
-        mMaxSpanCount = mMaxChildCount / ConstraintCount;
 
         if (mCreateNewChildCallback != null)
         {
@@ -573,8 +566,6 @@ public abstract class NFLoopScrollRectBase : ScrollRect
         }
 
         TotalCount = targetCount;
-
-        UpdateContentSize();
     }
 
 
@@ -631,7 +622,7 @@ public abstract class NFLoopScrollRectBase : ScrollRect
     }
 
 
-    public void RefreshCells()
+    public virtual void RefreshCells()
     {
         if (!mHasInit)
         {

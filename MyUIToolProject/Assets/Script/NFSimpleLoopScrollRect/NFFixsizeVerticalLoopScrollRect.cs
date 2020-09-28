@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class NFFixSizeVerticalLoopScrollRect : NFLoopScrollRectBase
+public class NFFixSizeVerticalLoopScrollRect : NFFixSizeLoopScrollRectBase
 {
     protected override void Awake()
     {
@@ -92,11 +92,6 @@ public class NFFixSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
     private void InternalUpdateMoveToMore()
     {
-        if (EndDataIndex + 1 >= TotalCount)
-        {
-            return;
-        }
-
         var _childCount = content.childCount;
 
         bool _updatePos = false;
@@ -107,7 +102,7 @@ public class NFFixSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
         for (int i = 0; i < _childCount; i += ConstraintCount)
         {
-            if (EndDataIndex >= TotalCount)
+            if (EndDataIndex >= TotalCount - 1)
             {
                 break;
             }
@@ -136,6 +131,11 @@ public class NFFixSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
                 for (int j = i; j < i + ConstraintCount; ++j)
                 {
+                    if (EndDataIndex >= TotalCount - 1)
+                    {
+                        break;
+                    }
+
                     RectTransform _targetRectTrans = null;
 
                     if (j == i)
@@ -245,11 +245,6 @@ public class NFFixSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
     private void InternalUpdateForMoveToLess()
     {
-        if (StartDataIndex - 1 < 0)
-        {
-            return;
-        }
-
         var _childCount = content.childCount;
 
         bool _updatePos = false;
@@ -260,6 +255,11 @@ public class NFFixSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
         for (int i = _childCount - 1; i >= 0; i -= ConstraintCount)
         {
+            if (StartDataIndex <= 0)
+            {
+                break;
+            }
+
             var _childRect = content.GetChild(_childCount - 1) as RectTransform;
 
             if (_childRect == null)
@@ -280,15 +280,15 @@ public class NFFixSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
             if (_maxPos.y < _viewPortMinPosY)
             {
-                if (StartDataIndex <= 0)
-                {
-                    break;
-                }
-
                 _updatePos = true;
 
                 for (int j = i; j > i - ConstraintCount; --j)
                 {
+                    if (StartDataIndex <= 0)
+                    {
+                        break;
+                    }
+
                     RectTransform _targetRectTrans = null;
 
                     if (j == i)

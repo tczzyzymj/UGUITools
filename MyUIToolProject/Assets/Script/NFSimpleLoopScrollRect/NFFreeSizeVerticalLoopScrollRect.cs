@@ -6,9 +6,15 @@ using UnityEngine.UI;
 using RectTransform = UnityEngine.RectTransform;
 
 
-public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
+/// <summary>
+/// 先测试一下不改变内容是否能够确认位置
+/// </summary>
+public class NFFreeSizeVerticalLoopScrollRect : NFFreeSizeLoopScrollRectBase
 {
     public float MinChildHeight = 100f;
+
+
+    protected Dictionary<int, float> mChildHeightMap = new Dictionary<int, float>();
 
 
     protected override void Awake()
@@ -18,17 +24,6 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
         horizontal = false;
 
         vertical = true;
-    }
-
-
-    /// <summary>
-    /// 这里不能计算
-    /// </summary>
-    /// <param name="childRect"></param>
-    protected override void CalculateItemSize(RectTransform childRect)
-    {
-        mItemSize.x = childRect.rect.width;
-        mItemSize.y = MinChildHeight;
     }
 
 
@@ -82,18 +77,13 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
     private void InternalUpdateMoveToMore()
     {
-        if (EndDataIndex + 1 >= TotalCount)
-        {
-            return;
-        }
-
         var _childCount = content.childCount;
 
         bool _isOverview = false;
 
         for (int i = 0; i < _childCount; i += ConstraintCount)
         {
-            if (EndDataIndex >= TotalCount)
+            if (EndDataIndex >= TotalCount - 1)
             {
                 break;
             }
@@ -120,6 +110,11 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
             {
                 for (int j = i; j < i + ConstraintCount; ++j)
                 {
+                    if (EndDataIndex >= TotalCount - 1)
+                    {
+                        break;
+                    }
+
                     RectTransform _targetRectTrans = null;
 
                     if (j == i)
@@ -142,32 +137,6 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
                     StartDataIndex++;
 
-                    if (j == i && !_isOverview)
-                    {
-                        var _targetSpan = mMaxSpanCount - 1;
-
-                        var _tempPosY = _minPos.y;
-
-                        // 这里要检测一下，如果 StartDataIndex-- 的地方还是不能显示，那么继续减少
-                        do
-                        {
-                            ++_targetSpan;
-
-                            _tempPosY = _minPos.y - (_targetSpan * mItemSize.y + (_targetSpan - 1) * Spacing.y);
-                        } while (_tempPosY > viewport.rect.max.y);
-
-                        var _span = _targetSpan - mMaxSpanCount;
-
-                        if (_span > 0)
-                        {
-                            _isOverview = true;
-
-                            StartDataIndex += (ConstraintCount * _span);
-
-                            EndDataIndex += (ConstraintCount * _span);
-                        }
-                    }
-
                     if (EndDataIndex >= TotalCount)
                     {
                         _targetRectTrans.gameObject.SetActive(false);
@@ -184,12 +153,15 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
                             EndDataIndex
                         );
 
+                        UpdateContentSize();
+
                         var _preRect = content.GetChild(content.childCount - 2) as RectTransform;
 
                         // 这里更新一下单个的位置
                         UpdateSingleChildPosByDataIndex(
                             _targetRectTrans,
-                            _preRect
+                            _preRect,
+                            false
                         );
                     }
                 }
@@ -207,22 +179,28 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
     }
 
 
+    public override void RefreshCells()
+    {
+        base.RefreshCells();
+
+        UpdateContentSize();
+    }
+
+
     protected override void UpdateContentSize()
     {
         base.UpdateContentSize();
 
         var _sizeDelta = content.sizeDelta;
 
-        var _totalCount = TotalCount;
+        var _totalHeight = (TotalCount - 1) * Spacing.y + Padding.top + Padding.bottom;
 
-        if (ConstraintCount > 1)
+        foreach (var _data in mChildHeightMap)
         {
-            _totalCount = Mathf.CeilToInt((float) TotalCount / ConstraintCount);
+            _totalHeight += _data.Value;
         }
 
-        var _height = _totalCount * mItemSize.y + (_totalCount - 1) * Spacing.y + Padding.top + Padding.bottom;
-
-        _sizeDelta.y = _height;
+        _sizeDelta.y = _totalHeight;
 
         content.sizeDelta = _sizeDelta;
     }
@@ -230,17 +208,17 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
     private void InternalUpdateForMoveToLess()
     {
-        if (StartDataIndex - 1 < 0)
-        {
-            return;
-        }
-
         var _childCount = content.childCount;
 
         bool _isOverview = false;
 
         for (int i = _childCount - 1; i >= 0; i -= ConstraintCount)
         {
+            if (StartDataIndex <= 0)
+            {
+                break;
+            }
+
             var _childRect = content.GetChild(_childCount - 1) as RectTransform;
 
             if (_childRect == null)
@@ -261,13 +239,13 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
             if (_maxPos.y < _viewPortMinPosY)
             {
-                if (StartDataIndex <= 0)
-                {
-                    break;
-                }
-
                 for (int j = i; j > i - ConstraintCount; --j)
                 {
+                    if (StartDataIndex <= 0)
+                    {
+                        break;
+                    }
+
                     RectTransform _targetRectTrans = null;
 
                     if (j == i)
@@ -290,31 +268,6 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
                     EndDataIndex--;
 
-                    if (j == i && !_isOverview)
-                    {
-                        var _targetSpan = mMaxSpanCount - 1;
-
-                        var _tempMaxY = _maxPos.y;
-
-                        // 这里要检测一下，如果 StartDataIndex-- 的地方还是不能显示，那么继续减少
-                        do
-                        {
-                            ++_targetSpan;
-                            _tempMaxY = _maxPos.y + (_targetSpan * mItemSize.y + (_targetSpan - 1) * Spacing.y);
-                        } while (_tempMaxY < _viewPortMinPosY);
-
-                        var _span = _targetSpan - mMaxSpanCount;
-
-                        if (_span > 0)
-                        {
-                            _isOverview = true;
-
-                            StartDataIndex -= (ConstraintCount * _span);
-
-                            EndDataIndex -= (ConstraintCount * _span);
-                        }
-                    }
-
                     _targetRectTrans.gameObject.SetActive(true);
 
                     var _gameIndex = mChildIndexMap[_targetRectTrans.gameObject];
@@ -325,11 +278,14 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
                         StartDataIndex
                     );
 
+                    UpdateContentSize();
+
                     var _preChildRect = content.GetChild(1) as RectTransform;
 
                     UpdateSingleChildPosByDataIndex(
                         _targetRectTrans,
-                        _preChildRect
+                        _preChildRect,
+                        true
                     );
                 }
             }
@@ -350,13 +306,51 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
     {
         base.RefreshChildData(go, goIndex, dataIndex);
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(go.transform as RectTransform);
+        var _rectTrans = go.transform as RectTransform;
+
+        if (_rectTrans == null)
+        {
+            ShowError("无法获得 RectTransform，请检查!");
+
+            return;
+        }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_rectTrans);
+
+        mChildHeightMap[dataIndex] = _rectTrans.rect.height;
     }
 
 
+    public override void RefillCells()
+    {
+        mChildHeightMap.Clear();
+
+        base.RefillCells();
+
+        UpdateContentSize();
+    }
+
+
+    public override void RefillCellsFromEnd()
+    {
+        mChildHeightMap.Clear();
+
+        base.RefillCellsFromEnd();
+
+        UpdateContentSize();
+    }
+
+
+    /// <summary>
+    /// 更新单个数据
+    /// </summary>
+    /// <param name="targetRect"></param>
+    /// <param name="preRectTransform"></param>
+    /// <param name="updateForward"></param>
     protected void UpdateSingleChildPosByDataIndex(
         RectTransform targetRect,
-        RectTransform preRectTransform
+        RectTransform preRectTransform,
+        bool updateForward
     )
     {
         if (targetRect == null)
@@ -368,7 +362,11 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
         var _targetPos = new Vector3(
             CalculateChildPosX(targetRect),
-            CalculateChildPosY(targetRect, preRectTransform),
+            CalculateChildPosY(
+                targetRect,
+                preRectTransform,
+                updateForward
+            ),
             0
         );
 
@@ -402,7 +400,7 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
                 var _targetPos = new Vector3(
                     CalculateChildPosX(_child),
-                    CalculateChildPosY(_child, _preChild),
+                    CalculateChildPosY(_child, _preChild, false),
                     0
                 );
 
@@ -431,7 +429,7 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
                 var _targetPos = new Vector3(
                     CalculateChildPosX(_child),
-                    CalculateChildPosY(_child, _preChild),
+                    CalculateChildPosY(_child, _preChild, true),
                     0
                 );
 
@@ -443,24 +441,43 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
 
     protected float CalculateChildPosY(
         RectTransform childRectTransform,
-        RectTransform preChildRectTransform
+        RectTransform preChildRectTransform,
+        bool updateForward
     )
     {
         var _childHeight = childRectTransform.rect.height;
 
         float _posY = 0;
 
-        if (preChildRectTransform == null)
+        if (updateForward)
         {
-            // 这里认为是第一个
-            _posY = -(Padding.top + _childHeight * (1 - childRectTransform.pivot.y));
+            if (preChildRectTransform == null)
+            {
+                // 这里认为是第一个
+                _posY = -(Padding.top + _childHeight * (1 - childRectTransform.pivot.y));
+            }
+            else
+            {
+                _posY = preChildRectTransform.localPosition.y +
+                        (Spacing.y +
+                         _childHeight * (1 - childRectTransform.pivot.y) +
+                         preChildRectTransform.rect.height * (1 - preChildRectTransform.pivot.y));
+            }
         }
         else
         {
-            _posY = preChildRectTransform.localPosition.y -
-                    (Spacing.y +
-                     _childHeight * (1 - childRectTransform.pivot.y) +
-                     preChildRectTransform.rect.height * (1 - preChildRectTransform.pivot.y));
+            if (preChildRectTransform == null)
+            {
+                // 这里认为是第一个
+                _posY = -(Padding.top + _childHeight * (1 - childRectTransform.pivot.y));
+            }
+            else
+            {
+                _posY = preChildRectTransform.localPosition.y -
+                        (Spacing.y +
+                         _childHeight * (1 - childRectTransform.pivot.y) +
+                         preChildRectTransform.rect.height * (1 - preChildRectTransform.pivot.y));
+            }
         }
 
         return _posY;
@@ -473,7 +490,7 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
     {
         if (mGridLayout != null)
         {
-            var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
+            var _tempPosX = childRectTransform.pivot.x * ItemWidth +
                             Padding.left;
 
             return _tempPosX;
@@ -483,7 +500,7 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
         {
             case TextAnchor.UpperLeft :
             {
-                var _tempPosX = childRectTransform.pivot.x * mItemSize.x +
+                var _tempPosX = childRectTransform.pivot.x * ItemWidth +
                                 Padding.left;
 
                 return _tempPosX;
@@ -491,7 +508,7 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
             case TextAnchor.UpperRight :
             {
                 var _tempX = content.rect.width -
-                             (1 - childRectTransform.pivot.x) * mItemSize.x +
+                             (1 - childRectTransform.pivot.x) * ItemWidth +
                              Padding.left;
 
                 return _tempX;
@@ -500,7 +517,7 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
             default :
             {
                 var _tempX = content.rect.width * 0.5f +
-                             (childRectTransform.pivot.x - 0.5f) * mItemSize.x +
+                             (childRectTransform.pivot.x - 0.5f) * ItemWidth +
                              Padding.left;
 
                 return _tempX;
@@ -508,56 +525,6 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
         }
     }
 
-
-    private float CalculateForMoveDistance(int index)
-    {
-        float _distance = 0;
-
-        int _childIndex = 0;
-
-        bool _isOverview = false;
-
-        if (index >= StartDataIndex && index <= EndDataIndex)
-        {
-            _childIndex = index - StartDataIndex;
-        }
-        else
-        {
-            _isOverview = true;
-        }
-
-        var _child = content.GetChild(_childIndex) as RectTransform;
-
-        Vector3[] _childCorner = new Vector3[4];
-
-        _child.GetWorldCorners(_childCorner);
-
-        Vector3 _centerPos = Vector3.zero;
-
-        var _tempCorner_0 = viewport.InverseTransformPoint(_childCorner[0]);
-
-        var _tempCorner_1 = viewport.InverseTransformPoint(_childCorner[2]);
-
-        _centerPos = Vector3.Lerp(_tempCorner_0, _tempCorner_1, 0.5f);
-
-        if (_isOverview)
-        {
-            // 如果是超出了范围的，那么就需要增加相对的距离
-            var _fromRowIndex = GetRowIndexByIndex(StartDataIndex);
-
-            var _endRowIndex = GetRowIndexByIndex(index);
-
-            var _rowSpan = _fromRowIndex - _endRowIndex;
-
-            var _tempDisY = _rowSpan * (this.mItemSize.y + Spacing.y);
-
-            _centerPos.y += _tempDisY;
-        }
-
-        _distance = viewport.rect.center.y - _centerPos.y;
-
-        return _distance;
-    }
 
 
     /// <summary>
@@ -588,9 +555,15 @@ public class NFFreeSizeVerticalLoopScrollRect : NFLoopScrollRectBase
     }
 
 
+    /// <summary>
+    /// TODO ： 这里要重新写
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="totalTime"></param>
+    /// <returns></returns>
     protected override IEnumerator InternalScrollToTarget(int index, float totalTime)
     {
-        float _moveDistance = CalculateForMoveDistance(index);
+        float _moveDistance = 0;
 
         if (!Mathf.Approximately(_moveDistance, 0))
         {

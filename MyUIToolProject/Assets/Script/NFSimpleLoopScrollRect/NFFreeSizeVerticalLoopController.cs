@@ -21,8 +21,17 @@ public class NFFreeSizeVerticalLoopController : MonoBehaviour
     public Button ScrollToIndexButton;
 
 
-    private List<NFFreesizeLoopVerticleSampleItem> mItemList =
-        new List<NFFreesizeLoopVerticleSampleItem>();
+    private List<NFFreeSizeLoopVerticleSampleItem> mItemList =
+        new List<NFFreeSizeLoopVerticleSampleItem>();
+
+
+    private static string mStr = "啊";
+
+
+    private static System.Random mRandom = new System.Random((int) DateTime.UtcNow.Ticks);
+
+
+    private List<string> mTargetDataList = new List<string>();
 
 
     private void Awake()
@@ -50,6 +59,25 @@ public class NFFreeSizeVerticalLoopController : MonoBehaviour
         }
 
         FixsizeLoopScrollRectBase.SetTotalCount(_targetCount);
+
+        // 这里初始化一下数据
+        {
+            mTargetDataList.Clear();
+
+            for (int i = 0; i < _targetCount; ++i)
+            {
+                var _tempCount = mRandom.Next(20, 150);
+
+                string _str = string.Empty;
+
+                for (int _j = 0; _j < _tempCount; ++_j)
+                {
+                    _str += mStr;
+                }
+
+                mTargetDataList.Add(_str);
+            }
+        }
 
         FixsizeLoopScrollRectBase.RefreshCells();
     }
@@ -93,7 +121,7 @@ public class NFFreeSizeVerticalLoopController : MonoBehaviour
         {
             var _child = _contentTrans.GetChild(i);
 
-            var _targetCO = _child.gameObject.GetComponent<NFFreesizeLoopVerticleSampleItem>();
+            var _targetCO = _child.gameObject.GetComponent<NFFreeSizeLoopVerticleSampleItem>();
 
             mItemList.Add(_targetCO);
         }
@@ -102,6 +130,13 @@ public class NFFreeSizeVerticalLoopController : MonoBehaviour
 
     private void InternalRefreshItem(GameObject targetGO, int gameObjectIndex, int dataIndex)
     {
-        mItemList[gameObjectIndex].RefreshData(dataIndex);
+        if (dataIndex < 0 || dataIndex >= FixsizeLoopScrollRectBase.TotalCount)
+        {
+            Debug.LogError($"越界了，下标是：{dataIndex}，总数：{FixsizeLoopScrollRectBase.TotalCount}");
+
+            return;
+        }
+
+        mItemList[gameObjectIndex].RefreshData(dataIndex, mTargetDataList[dataIndex]);
     }
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class NFFixSizeHorizontalLoopScrollRect : NFLoopScrollRectBase
+public class NFFixSizeHorizontalLoopScrollRect : NFFixSizeLoopScrollRectBase
 {
     protected override void Awake()
     {
@@ -67,11 +67,6 @@ public class NFFixSizeHorizontalLoopScrollRect : NFLoopScrollRectBase
 
     private void InternalUpdateMoveToMore()
     {
-        if (StartDataIndex - 1 < 0)
-        {
-            return;
-        }
-
         var _childCount = content.childCount;
 
         bool _updatePos = false;
@@ -82,6 +77,11 @@ public class NFFixSizeHorizontalLoopScrollRect : NFLoopScrollRectBase
 
         for (int i = _childCount - 1; i >= 0; i -= ConstraintCount)
         {
+            if (StartDataIndex <= 0)
+            {
+                break;
+            }
+
             var _childRect = content.GetChild(_childCount - 1) as RectTransform;
 
             if (_childRect == null)
@@ -101,15 +101,15 @@ public class NFFixSizeHorizontalLoopScrollRect : NFLoopScrollRectBase
 
             if (_min.x > _viewPortMaxX)
             {
-                if (StartDataIndex <= 0)
-                {
-                    break;
-                }
-
                 _updatePos = true;
 
                 for (int j = i; j > i - ConstraintCount; --j)
                 {
+                    if (StartDataIndex <= 0)
+                    {
+                        break;
+                    }
+
                     RectTransform _targetRectTrans = null;
 
                     if (j == i)
@@ -189,11 +189,6 @@ public class NFFixSizeHorizontalLoopScrollRect : NFLoopScrollRectBase
 
     private void InternalUpdateMoveToLess()
     {
-        if (EndDataIndex + 1 >= TotalCount)
-        {
-            return;
-        }
-
         var _childCount = content.childCount;
 
         bool _updatePos = false;
@@ -204,7 +199,7 @@ public class NFFixSizeHorizontalLoopScrollRect : NFLoopScrollRectBase
 
         for (int i = 0; i < _childCount; i += ConstraintCount)
         {
-            if (EndDataIndex >= TotalCount)
+            if (EndDataIndex >= TotalCount - 1)
             {
                 break;
             }
@@ -232,6 +227,11 @@ public class NFFixSizeHorizontalLoopScrollRect : NFLoopScrollRectBase
 
                 for (int j = i; j < i + ConstraintCount; ++j)
                 {
+                    if (EndDataIndex >= TotalCount - 1)
+                    {
+                        break;
+                    }
+
                     RectTransform _targetRectTrans = null;
 
                     if (j == i)
