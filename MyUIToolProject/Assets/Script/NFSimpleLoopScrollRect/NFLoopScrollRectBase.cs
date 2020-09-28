@@ -56,8 +56,6 @@ public abstract class NFLoopScrollRectBase : ScrollRect
         set
         {
             mStartDataIndex = value;
-
-            Debug.LogError("mStartDataIndex  is : " + mStartDataIndex);
         }
     }
 
@@ -539,7 +537,7 @@ public abstract class NFLoopScrollRectBase : ScrollRect
     protected abstract void CheckChildSwap();
 
 
-    public void SetTotalCount(int targetCount)
+    public virtual void SetTotalCount(int targetCount)
     {
         if (TotalCount > targetCount)
         {

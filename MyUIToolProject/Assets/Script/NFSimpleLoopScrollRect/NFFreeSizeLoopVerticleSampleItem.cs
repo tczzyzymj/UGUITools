@@ -9,9 +9,6 @@ public class NFFreeSizeLoopVerticleSampleItem : MonoBehaviour
     public Text TargetText;
 
 
-
-
-
     public void RefreshData(int index, string targetData)
     {
         this.TargetText.text = $"{(index + 1)}、 {targetData}";

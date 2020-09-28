@@ -35,6 +35,14 @@ public abstract class NFFixSizeLoopScrollRectBase : NFLoopScrollRectBase
     protected int mMaxSpanCount = 0;
 
 
+    public override void SetTotalCount(int targetCount)
+    {
+        base.SetTotalCount(targetCount);
+
+        UpdateContentSize();
+    }
+
+
     protected override bool InternalCreateChild()
     {
         if (mHasCreateChild)

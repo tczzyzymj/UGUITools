@@ -49,6 +49,8 @@ public class NFSimpleLoopController : MonoBehaviour
         }
 
         FixsizeLoopScrollRectBase.SetTotalCount(_targetCount);
+
+        FixsizeLoopScrollRectBase.RefreshCells();
     }
 
 
