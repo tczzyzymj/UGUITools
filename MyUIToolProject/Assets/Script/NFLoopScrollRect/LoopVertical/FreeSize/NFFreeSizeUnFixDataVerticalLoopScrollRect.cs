@@ -404,10 +404,10 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
                 // 如果发生了大小的变化，那么需要做调整了
                 if (updateFromFront)
                 {
-                    //if (dataIndex != 0)
-                    //{
-                    //    _targetPos.y = _oldPos;
-                    //}
+                    if (dataIndex != 0)
+                    {
+                        _targetPos.y = _oldPos;
+                    }
 
                     for (int i = 1; i < content.childCount; ++i)
                     {
