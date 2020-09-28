@@ -9,7 +9,7 @@ using RectTransform = UnityEngine.RectTransform;
 /// <summary>
 /// 先测试一下不改变内容是否能够确认位置
 /// </summary>
-public class NFFreeSizeVerticalLoopScrollRect : NFFreeSizeLoopScrollRectBase
+public class NFFreeSizeFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRectBase
 {
     public float MinChildHeight = 100f;
 
