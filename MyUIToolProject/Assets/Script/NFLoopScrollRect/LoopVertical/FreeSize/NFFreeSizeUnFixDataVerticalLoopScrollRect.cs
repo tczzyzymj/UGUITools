@@ -20,6 +20,9 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
     protected Dictionary<int, float> mChildPositionMap = new Dictionary<int, float>();
 
 
+    protected Dictionary<int, float> mChangeChildNewPosMap = new Dictionary<int, float>();
+
+
     protected override void Awake()
     {
         base.Awake();
@@ -371,11 +374,6 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
             return;
         }
 
-        if (mRefreshFromFront && dataIndex == 0)
-        {
-            preRectTransform = null;
-        }
-
         Vector2 _targetPos = new Vector2(
             CalculateChildPosX(targetRect),
             CalculateChildPosY(
@@ -389,15 +387,9 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
         {
             var _oldPos = mChildPositionMap[dataIndex];
 
-            var _posSpan = _oldPos - _targetPos.y;
+            var _posSpan = (_oldPos - _targetPos.y);
 
-            ShowError(
-                string.Format(
-                    "Index is :{0},_posSpan is : {1}",
-                    dataIndex,
-                    _posSpan
-                )
-            );
+            ShowError($"{dataIndex} : pos span is : " + _posSpan);
 
             if (!Mathf.Approximately(_posSpan, 0))
             {
@@ -406,7 +398,35 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
                 {
                     if (dataIndex != 0)
                     {
+                        if (mChildPositionMap.ContainsKey(dataIndex))
+                        {
+                            mChangeChildNewPosMap[dataIndex] = _targetPos.y;
+                        }
+
                         _targetPos.y = _oldPos;
+                    }
+                    else
+                    {
+                        Vector2 _realPos = new Vector2(
+                            CalculateChildPosX(targetRect),
+                            CalculateChildPosY(
+                                targetRect,
+                                null,
+                                updateFromFront
+                            )
+                        );
+
+                        _targetPos = _realPos;
+
+                        _posSpan = _oldPos - _realPos.y;
+
+                        var _tempSpan = mChildPositionMap[1] - mChangeChildNewPosMap[1];
+
+                        ShowError("1 : temp pos span is : " + _tempSpan);
+
+                        //_posSpan += (_tempSpan);
+
+                        ShowError("New pos span is : " + _posSpan);
                     }
 
                     for (int i = 1; i < content.childCount; ++i)
@@ -422,13 +442,13 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
                         mChildPositionMap[dataIndex + i] = _tempPosition.y;
                     }
 
-                    //{
-                    //    var _tempPosition = content.localPosition;
+                    {
+                        var _tempPosition = content.localPosition;
 
-                    //    _tempPosition.y += _posSpan;
+                        _tempPosition.y -= _posSpan;
 
-                    //    content.localPosition = _tempPosition;
-                    //}
+                        content.localPosition = _tempPosition;
+                    }
                 }
             }
         }

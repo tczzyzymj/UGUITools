@@ -152,6 +152,14 @@ public class NFFixSizeVerticalLoopScrollRect : NFFixSizeLoopScrollRectBase
                         continue;
                     }
 
+                    if (!Mathf.Approximately(
+                        _targetRectTrans.anchoredPosition.y,
+                        _childRect.anchoredPosition.y
+                    ))
+                    {
+                        break;
+                    }
+
                     _targetRectTrans.SetAsLastSibling();
 
                     ++_changeCount;
@@ -303,6 +311,14 @@ public class NFFixSizeVerticalLoopScrollRect : NFFixSizeLoopScrollRectBase
                     if (_targetRectTrans == null)
                     {
                         continue;
+                    }
+
+                    if (!Mathf.Approximately(
+                        _targetRectTrans.anchoredPosition.y,
+                        _childRect.anchoredPosition.y
+                    ))
+                    {
+                        break;
                     }
 
                     ++_moveCount;

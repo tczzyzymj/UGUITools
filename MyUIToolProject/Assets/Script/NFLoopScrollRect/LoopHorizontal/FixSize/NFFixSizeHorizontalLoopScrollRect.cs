@@ -126,6 +126,14 @@ public class NFFixSizeHorizontalLoopScrollRect : NFFixSizeLoopScrollRectBase
                         continue;
                     }
 
+                    if (!Mathf.Approximately(
+                        _targetRectTrans.anchoredPosition.x,
+                        _childRect.anchoredPosition.x
+                    ))
+                    {
+                        break;
+                    }
+
                     ++_moveCount;
 
                     _targetRectTrans.SetAsFirstSibling();
@@ -246,6 +254,14 @@ public class NFFixSizeHorizontalLoopScrollRect : NFFixSizeLoopScrollRectBase
                     if (_targetRectTrans == null)
                     {
                         continue;
+                    }
+
+                    if (!Mathf.Approximately(
+                        _targetRectTrans.anchoredPosition.x,
+                        _childRect.anchoredPosition.x
+                    ))
+                    {
+                        break;
                     }
 
                     _targetRectTrans.SetAsLastSibling();
