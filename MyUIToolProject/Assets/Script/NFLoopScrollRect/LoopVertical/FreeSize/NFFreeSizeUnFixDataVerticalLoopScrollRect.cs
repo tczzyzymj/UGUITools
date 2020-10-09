@@ -23,6 +23,9 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
     protected Dictionary<int, float> mChangeChildNewPosMap = new Dictionary<int, float>();
 
 
+    protected Dictionary<int, float> mChildOldHeightMap = new Dictionary<int, float>();
+
+
     protected override void Awake()
     {
         base.Awake();
@@ -323,6 +326,11 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
             return;
         }
 
+        if (mChildHeightMap.TryGetValue(dataIndex, out var _targetHeight))
+        {
+            mChildOldHeightMap[dataIndex] = _targetHeight;
+        }
+
         LayoutRebuilder.ForceRebuildLayoutImmediate(_rectTrans);
 
         mChildHeightMap[dataIndex] = _rectTrans.rect.height;
@@ -332,6 +340,10 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
     public override void RefillCells()
     {
         mChildHeightMap.Clear();
+
+        mChildOldHeightMap.Clear();
+
+        mChangeChildNewPosMap.Clear();
 
         mChildPositionMap.Clear();
 
@@ -346,6 +358,10 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
         mChildHeightMap.Clear();
 
         mChildPositionMap.Clear();
+
+        mChangeChildNewPosMap.Clear();
+
+        mChildOldHeightMap.Clear();
 
         base.RefillCellsFromEnd();
 
@@ -389,8 +405,6 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
 
             var _posSpan = (_oldPos - _targetPos.y);
 
-            ShowError($"{dataIndex} : pos span is : " + _posSpan);
-
             if (!Mathf.Approximately(_posSpan, 0))
             {
                 // 如果发生了大小的变化，那么需要做调整了
@@ -398,11 +412,6 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
                 {
                     if (dataIndex != 0)
                     {
-                        if (mChildPositionMap.ContainsKey(dataIndex))
-                        {
-                            mChangeChildNewPosMap[dataIndex] = _targetPos.y;
-                        }
-
                         _targetPos.y = _oldPos;
                     }
                     else
@@ -418,15 +427,12 @@ public class NFFreeSizeUnFixDataVerticalLoopScrollRect : NFFreeSizeLoopScrollRec
 
                         _targetPos = _realPos;
 
-                        _posSpan = _oldPos - _realPos.y;
+                        _posSpan = (mChildOldHeightMap[0] - mChildHeightMap[0]);
 
-                        var _tempSpan = mChildPositionMap[1] - mChangeChildNewPosMap[1];
+                        // 这里是第二个的高度改变情况，不用考虑位置
+                        var _tempSpan = (mChildOldHeightMap[1] - mChildHeightMap[1]) * 0.5f;
 
-                        ShowError("1 : temp pos span is : " + _tempSpan);
-
-                        //_posSpan += (_tempSpan);
-
-                        ShowError("New pos span is : " + _posSpan);
+                        _posSpan += (_tempSpan);
                     }
 
                     for (int i = 1; i < content.childCount; ++i)
